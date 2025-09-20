@@ -68,3 +68,6 @@ Thumbs.db
 # -------------------------------
 *.bak
 *.tmp
+
+
+frontend/src/firebase.js
