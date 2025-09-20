@@ -1,0 +1,70 @@
+backend/serviceAccountKey.json
+# -------------------------------
+# Node.js
+# -------------------------------
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+package-lock.json
+
+# -------------------------------
+# Build outputs
+# -------------------------------
+build/
+dist/
+.cache/
+.next/
+out/
+coverage/
+
+# -------------------------------
+# Firebase
+# -------------------------------
+.firebase/
+.firebase-debug.log
+.firebaserc
+functions/node_modules/
+functions/lib/
+functions/package-lock.json
+
+# -------------------------------
+# Environment variables
+# -------------------------------
+.env
+.env.local
+.env.development
+.env.production
+.env.test
+
+# -------------------------------
+# Logs
+# -------------------------------
+*.log
+logs
+*.out
+*.pid
+*.seed
+*.gz
+
+# -------------------------------
+# OS files
+# -------------------------------
+.DS_Store
+Thumbs.db
+
+# -------------------------------
+# IDE / Editor
+# -------------------------------
+.vscode/
+.idea/
+*.swp
+*.swo
+*.iml
+
+# -------------------------------
+# Misc
+# -------------------------------
+*.bak
+*.tmp

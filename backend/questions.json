@@ -1,0 +1,242 @@
+
+
+[
+  {
+    "id": 1,
+    "title": "Apple Pay Volume",
+    "company_name": "Visa",
+    "difficulty": "Medium",
+    "tags": ["SQL", "Aggregation"],
+    "question_text": "Calculate the total transaction volume for each merchant where the transaction was performed via Apple Pay. Output merchant_id and total transactions. For merchants with no Apple Pay transactions, output 0. Display result in descending order of volume.",
+    "schema": "CREATE TABLE transactions (merchant_id INT, transaction_amount INT, payment_method VARCHAR(50));",
+    "sample_data": "INSERT INTO transactions VALUES (1,600,'Contactless Chip'),(1,850,'Apple Pay'),(1,500,'Apple Pay'),(2,560,'Magstripe'),(2,400,'Samsung Pay'),(4,1200,'apple pay');",
+    "expected_query": "SELECT merchant_id, SUM(CASE WHEN LOWER(payment_method)='apple pay' THEN transaction_amount ELSE 0 END) AS volume FROM transactions GROUP BY merchant_id ORDER BY volume DESC;",
+    "solution_explanation": "We use a CASE WHEN inside SUM to add transaction_amount only when the payment_method equals 'Apple Pay' (ignoring case by using LOWER). For non-Apple Pay transactions, we add 0. Grouping by merchant_id ensures we compute totals per merchant. Finally, ORDER BY volume DESC sorts merchants by highest transaction volume.",
+    "row_order_matters": true,
+    "column_order_matters": false,
+    "hints": [
+      "Use CASE WHEN to count only Apple Pay transactions.",
+      "Be careful with text case differences like 'Apple Pay' vs 'apple pay'.",
+      "Group results by merchant_id and use SUM."
+    ]
+  },
+  {
+    "id": 2,
+    "title": "Average Review Ratings",
+    "company_name": "Tesla", 
+    "difficulty": "Easy",
+    "tags": ["SQL", "Aggregation", "Date Functions"],
+    "question_text": "Given the reviews table, write a query to get the average stars for each product every month. The output should include the month in numerical value, product id, and average star rating rounded to two decimal places. Sort the output based on month followed by the product id.",
+    "schema": "CREATE TABLE reviews (review_id INT, user_id INT, submit_date TIMESTAMP, product_id INT, stars INT);",
+    "sample_data": "INSERT INTO reviews VALUES (6171,123,'2022-06-08 00:00:00',50001,4),(7802,265,'2022-06-10 00:00:00',69852,4),(5293,362,'2022-06-18 00:00:00',50001,3),(6352,192,'2022-07-26 00:00:00',69852,3),(4517,981,'2022-07-05 00:00:00',69852,2);",
+    "expected_query": "SELECT EXTRACT(MONTH FROM submit_date) AS mth, product_id AS product, ROUND(AVG(stars),2) AS avg_stars FROM reviews GROUP BY product_id, EXTRACT(MONTH FROM submit_date) ORDER BY mth, product_id;",
+    "solution_explanation": "We extract the month from submit_date using EXTRACT(MONTH). Grouping by both product_id and month ensures we calculate averages per product per month. The AVG function computes the mean stars, and ROUND ensures only 2 decimal places. Ordering by month and product_id gives a clean sorted output.",
+    "row_order_matters": true,
+    "column_order_matters": false,
+    "hints": [
+      "Use EXTRACT(MONTH FROM submit_date) to get the month.",
+      "Apply AVG on the stars column.",
+      "ROUND the result to 2 decimal places."
+    ]
+  },
+  {
+    "id": 3,
+    "title": "Data Science Skills",
+    "company_name": "Generic",
+    "difficulty": "Easy",
+    "tags": ["SQL", "Aggregation", "Filtering"],
+    "question_text": "Given a table of candidates and their skills, find candidates who are proficient in Python, Tableau, and PostgreSQL. List the candidates who possess all required skills, sorted by candidate ID ascending.",
+    "schema": "CREATE TABLE candidates (candidate_id INT, skill VARCHAR(50));",
+    "sample_data": "INSERT INTO candidates VALUES (123,'Python'),(123,'Tableau'),(123,'PostgreSQL'),(234,'R'),(234,'PowerBI'),(234,'SQL Server'),(345,'Python'),(345,'Tableau');",
+    "expected_query": "SELECT candidate_id FROM (SELECT candidate_id, SUM(CASE WHEN skill='Python' OR skill='Tableau' OR skill='PostgreSQL' THEN 1 ELSE 0 END) AS proficiency FROM candidates GROUP BY candidate_id) temp WHERE proficiency=3 ORDER BY candidate_id;",
+    "solution_explanation": "We need to ensure a candidate has all 3 required skills. Using CASE WHEN, we assign 1 if the skill matches Python, Tableau, or PostgreSQL, otherwise 0. After grouping by candidate_id, we sum these values. If the total is 3, it means the candidate has all three skills. Finally, we filter with WHERE proficiency=3 and order by candidate_id.",
+    "row_order_matters": true,
+    "column_order_matters": false,
+    "hints": [
+      "Think about how to check if a candidate has all 3 skills.",
+      "Group by candidate_id to count skills.",
+      "Filter only those with all required skills."
+    ]
+  },
+  {
+  "id": 4,
+  "title": "Apple Pay Volume with Merchant Info",
+  "company_name": "Visa",
+  "difficulty": "Hard",
+  "tags": ["SQL", "Aggregation", "JOINs"],
+  "question_text": "Calculate the total Apple Pay transaction volume for each merchant. Include merchant name and merchant_id. If a merchant has no Apple Pay transactions, show 0. Display result in descending order of total volume.",
+  "schema": "CREATE TABLE merchants (merchant_id INT, merchant_name VARCHAR(50)); CREATE TABLE transactions (transaction_id INT, merchant_id INT, transaction_amount INT, payment_method VARCHAR(50));",
+  "sample_data": "INSERT INTO merchants VALUES (1,'Amazon'),(2,'Flipkart'),(3,'Walmart'); INSERT INTO transactions VALUES (1,1,600,'Contactless Chip'),(2,1,850,'Apple Pay'),(3,1,500,'Apple Pay'),(4,2,560,'Magstripe'),(5,2,400,'Samsung Pay');",
+  "expected_query": "SELECT m.merchant_id, m.merchant_name, COALESCE(SUM(CASE WHEN LOWER(t.payment_method)='apple pay' THEN t.transaction_amount ELSE 0 END),0) AS total_volume FROM merchants m LEFT JOIN transactions t ON m.merchant_id = t.merchant_id GROUP BY m.merchant_id, m.merchant_name ORDER BY total_volume DESC;",
+  "solution_explanation": "We use a LEFT JOIN to ensure all merchants appear, even if they have no transactions. CASE WHEN inside SUM adds transaction_amount only for Apple Pay (case-insensitive). COALESCE ensures that merchants with no Apple Pay transactions show 0. GROUP BY merchant_id and merchant_name calculates totals per merchant, and ORDER BY total_volume DESC sorts them from highest to lowest.",
+  "row_order_matters": true,
+  "column_order_matters": false,
+  "hints": [
+    "Use LEFT JOIN to include merchants with zero Apple Pay transactions.",
+    "Use CASE WHEN to sum only Apple Pay amounts.",
+    "Use COALESCE to replace NULL with 0."
+  ]
+},
+{
+  "id": 5,
+  "title": "Apple Pay Volume with Merchant Info (5 Merchants, Foreign Key)",
+  "company_name": "Visa",
+  "difficulty": "Medium",
+  "tags": ["SQL", "Aggregation", "JOINs", "Foreign Key"],
+  "question_text": "Calculate the total Apple Pay transaction volume for each merchant. Include merchant name and merchant_id. If a merchant has no Apple Pay transactions, show 0. Ensure transactions are linked correctly to merchants via a foreign key. Display result in descending order of total volume.",
+  "schema": "CREATE TABLE merchants (merchant_id INT PRIMARY KEY, merchant_name VARCHAR(50)); CREATE TABLE transactions (transaction_id INT PRIMARY KEY, merchant_id INT, transaction_amount INT, payment_method VARCHAR(50), FOREIGN KEY (merchant_id) REFERENCES merchants(merchant_id));",
+  "sample_data": "INSERT INTO merchants VALUES (1,'Amazon'),(2,'Flipkart'),(3,'Walmart'),(4,'Target'),(5,'BestBuy'); INSERT INTO transactions VALUES (1,1,600,'Contactless Chip'),(2,1,850,'Apple Pay'),(3,1,500,'Apple Pay'),(4,2,560,'Magstripe'),(5,2,400,'Samsung Pay'),(6,3,300,'Apple Pay'),(7,4,700,'Apple Pay'),(8,5,0,'Apple Pay');",
+  "expected_query": "SELECT m.merchant_id, m.merchant_name, COALESCE(SUM(CASE WHEN LOWER(t.payment_method)='apple pay' THEN t.transaction_amount ELSE 0 END),0) AS total_volume FROM merchants m LEFT JOIN transactions t ON m.merchant_id = t.merchant_id GROUP BY m.merchant_id, m.merchant_name ORDER BY total_volume DESC;",
+  "solution_explanation": "We use a LEFT JOIN to ensure all 5 merchants appear, even if they have no Apple Pay transactions. The transactions table has a foreign key referencing merchants to maintain data integrity. CASE WHEN inside SUM adds transaction_amount only for Apple Pay (case-insensitive). COALESCE ensures merchants with no Apple Pay transactions show 0. GROUP BY merchant_id and merchant_name calculates totals per merchant, and ORDER BY total_volume DESC sorts them from highest to lowest.",
+  "row_order_matters": true,
+  "column_order_matters": false,
+  "hints": [
+    "Use LEFT JOIN to include merchants with zero Apple Pay transactions.",
+    "Ensure the transactions table has a FOREIGN KEY to merchants.",
+    "Use CASE WHEN to sum only Apple Pay amounts.",
+    "Use COALESCE to replace NULL with 0."
+  ]
+},
+{
+  "id": 6,
+  "title": "Ad Campaign ROAS",
+  "company_name": "Google",
+  "difficulty": "Easy",
+  "tags": ["SQL", "Aggregation"],
+  "question_text": "Write a query to calculate the return on ad spend (ROAS) for each advertiser across all ad campaigns. Round your answer to 2 decimal places, and order your output by the advertiser_id. Hint: ROAS = Ad Revenue / Ad Spend.",
+  "schema": "CREATE TABLE ad_campaigns (campaign_id INT, spend INT, revenue FLOAT, advertiser_id INT);",
+  "sample_data": "INSERT INTO ad_campaigns VALUES (1,5000,7500,3),(2,1000,900,1),(3,3000,12000,2),(4,500,2000,4),(5,100,400,4);",
+  "expected_query": "SELECT advertiser_id, ROUND(SUM(revenue)::NUMERIC / SUM(spend), 2) AS ROAS FROM ad_campaigns GROUP BY advertiser_id ORDER BY advertiser_id;",
+  "solution_explanation": "We calculate ROAS as SUM(revenue)/SUM(spend) for each advertiser. Rounding ensures 2 decimal precision. GROUP BY advertiser_id ensures correct aggregation. Finally, ORDER BY advertiser_id outputs results in ascending order.",
+  "row_order_matters": true,
+  "column_order_matters": false,
+  "hints": [
+    "Use GROUP BY advertiser_id.",
+    "ROAS = SUM(revenue) / SUM(spend).",
+    "ROUND result to 2 decimal places."
+  ]
+},
+{
+  "id": 7,
+  "title": "Data Science Skills",
+  "company_name": "Unknown",
+  "difficulty": "Easy",
+  "tags": ["SQL", "Filtering", "Aggregation"],
+  "question_text": "Given a table of candidates and their skills, write a SQL query to find the candidates who possess all of the required skills for a Data Science job: Python, Tableau, and PostgreSQL. Sort the output by candidate_id in ascending order.",
+  "schema": "CREATE TABLE candidates (candidate_id INT, skill VARCHAR(50));",
+  "sample_data": "INSERT INTO candidates VALUES (123,'Python'),(123,'Tableau'),(123,'PostgreSQL'),(234,'R'),(234,'PowerBI'),(234,'SQL Server'),(345,'Python'),(345,'Tableau');",
+  "expected_query": "SELECT candidate_id FROM ( SELECT candidate_id, SUM(CASE WHEN skill IN ('Python','Tableau','PostgreSQL') THEN 1 ELSE 0 END) AS proficiency FROM candidates GROUP BY candidate_id ) temp WHERE proficiency=3 ORDER BY candidate_id;",
+  "solution_explanation": "We count how many of the required skills (Python, Tableau, PostgreSQL) each candidate has using a CASE WHEN inside SUM. If the count equals 3, it means the candidate has all required skills. Filtering with WHERE proficiency=3 ensures only fully qualified candidates are selected. Finally, we order results by candidate_id.",
+  "row_order_matters": true,
+  "column_order_matters": false,
+  "hints": [
+    "Use CASE WHEN inside SUM to count required skills.",
+    "Check for Python, Tableau, and PostgreSQL only.",
+    "Filter candidates with proficiency = 3."
+  ]
+},
+{
+  "id": 8,
+  "title": "App CTR",
+  "company_name": "Unknown",
+  "difficulty": "Easy",
+  "tags": ["SQL", "Aggregation", "Analytics"],
+  "question_text": "Assume you have an events table on app analytics. Write a query to get the click-through rate (CTR %) per app in 2022. Output the results in percentages rounded to 2 decimal places. CTR = 100.0 * Number of clicks / Number of impressions.",
+  "schema": "CREATE TABLE events (app_id INT, event_type VARCHAR(50), timestamp DATETIME);",
+  "sample_data": "INSERT INTO events VALUES (123,'impression','2022-07-18 11:36:12'),(123,'impression','2022-07-18 11:37:12'),(123,'click','2022-07-18 11:37:42'),(234,'impression','2022-07-18 14:15:12'),(234,'click','2022-07-18 14:16:12');",
+  "expected_query": "WITH CTE1 AS ( SELECT app_id, SUM(CASE WHEN event_type='click' THEN 1 ELSE 0 END)*1.00 AS clicks, SUM(CASE WHEN event_type='impression' THEN 1 ELSE 0 END)*1.00 AS impressions FROM events WHERE EXTRACT('year' FROM timestamp)=2022 GROUP BY app_id ) SELECT app_id, ROUND(clicks/impressions*100, 2) AS ctr FROM CTE1;",
+  "solution_explanation": "We first count clicks and impressions per app using CASE WHEN inside SUM. Multiplying by 1.00 ensures floating point division. CTR is calculated as clicks divided by impressions multiplied by 100, then rounded to 2 decimals. The WHERE clause restricts events to the year 2022.",
+  "row_order_matters": true,
+  "column_order_matters": false,
+  "hints": [
+    "Use CASE WHEN inside SUM to count clicks and impressions separately.",
+    "Filter events to year 2022 using EXTRACT or YEAR function.",
+    "CTR = (clicks / impressions) * 100, then ROUND to 2 decimals."
+  ]
+},
+{
+  "id": 9,
+  "title": "Average Post Hiatus (Part 1)",
+  "company_name": "Facebook",
+  "difficulty": "Easy",
+  "tags": ["SQL", "Date", "Aggregation"],
+  "question_text": "Given a table of Facebook posts, for each user who posted at least twice in 2021, write a query to find the number of days between each user's first post of the year and last post of the year in 2021. Output the user and number of days between their first and last post.",
+  "schema": "CREATE TABLE posts (user_id INT, post_id INT, post_date TIMESTAMP, post_content VARCHAR(255));",
+  "sample_data": "INSERT INTO posts VALUES (151652,599415,'2021-07-10 12:00:00','Need a hug'),(661093,624356,'2021-07-29 13:00:00','Bed. Class 8-12. Work 12-3. Gym 3-5 or 6. Then class 6-10. Another day that''s gonna fly by. I miss my girlfriend'),(4239,784254,'2021-07-04 11:00:00','Happy 4th of July!'),(661093,442560,'2021-07-08 14:00:00','Just going to cry myself to sleep after watching Marley and Me.'),(151652,111766,'2021-07-12 19:00:00','I''m so done with covid - need travelling ASAP!');",
+  "expected_query": "WITH CTE1 AS ( SELECT user_id, COUNT(user_id) AS count FROM posts WHERE EXTRACT('year' FROM post_date)=2021 GROUP BY user_id HAVING COUNT(user_id)>=2 ), CTE2 AS ( SELECT P.user_id, MIN(post_date) AS mindate, MAX(post_date) AS maxdate FROM posts P INNER JOIN CTE1 ON P.user_id=CTE1.user_id GROUP BY P.user_id ) SELECT user_id, DATE_PART('day', maxdate - mindate) AS days_between FROM CTE2;",
+  "solution_explanation": "We first filter users who posted at least twice in 2021 using a HAVING clause. Then for those users, we compute the MIN and MAX post_date to get their first and last posts in the year. Finally, we calculate the difference in days between maxdate and mindate using DATE_PART('day', ...).",
+  "row_order_matters": true,
+  "column_order_matters": false,
+  "hints": [
+    "Filter users with at least 2 posts in 2021 using HAVING.",
+    "Use MIN(post_date) and MAX(post_date) to get first and last posts.",
+    "Subtract dates and use DATE_PART('day', ...) to compute day difference."
+  ]
+},
+{
+  "id": 10,
+  "title": "Average Review Ratings",
+  "company_name": "Amazon",
+  "difficulty": "Easy",
+  "tags": ["SQL", "Aggregation", "Date"],
+  "question_text": "Given the reviews table, write a query to get the average stars for each product every month. The output should include the month in numerical value, product id, and average star rating rounded to two decimal places. Sort the output based on month followed by the product id.",
+  "schema": "CREATE TABLE reviews (review_id INT, user_id INT, submit_date TIMESTAMP, product_id INT, stars INT);",
+  "sample_data": "INSERT INTO reviews VALUES (6171,123,'2022-06-08 00:00:00',50001,4),(7802,265,'2022-06-10 00:00:00',69852,4),(5293,362,'2022-06-18 00:00:00',50001,3),(6352,192,'2022-07-26 00:00:00',69852,3),(4517,981,'2022-07-05 00:00:00',69852,2);",
+  "expected_query": "SELECT EXTRACT(MONTH FROM submit_date) AS mth, product_id AS product, ROUND(AVG(stars), 2) AS avg_stars FROM reviews GROUP BY product_id, EXTRACT(MONTH FROM submit_date) ORDER BY mth, product_id;",
+  "solution_explanation": "We group the reviews by product_id and month (extracted from submit_date). Then, we calculate the average star rating for each group and round it to 2 decimal places. Finally, we order the results by month and product_id.",
+  "row_order_matters": true,
+  "column_order_matters": false,
+  "hints": [
+    "Use EXTRACT(MONTH FROM submit_date) to get the month.",
+    "Group by product_id and month.",
+    "Use ROUND(AVG(stars), 2) for 2 decimal precision."
+  ]
+},
+{
+  "id": 11,
+  "title": "Cities With Completed Trades",
+  "company_name": "Robinhood",
+  "difficulty": "Easy",
+  "tags": ["SQL", "Aggregation", "Join"],
+  "question_text": "You are given the tables below containing information on Robinhood trades and users. Write a query to list the top three cities that have the most completed trade orders in descending order. Output the city and number of orders.",
+  "schema": "CREATE TABLE trades (order_id INT, user_id INT, price DECIMAL, quantity INT, status VARCHAR(20), timestamp TIMESTAMP);\nCREATE TABLE users (user_id INT, city VARCHAR(50), email VARCHAR(100), signup_date TIMESTAMP);",
+  "sample_data": "INSERT INTO trades VALUES (100101,111,9.80,10,'Cancelled','2022-08-17 12:00:00'),(100102,111,10.00,10,'Completed','2022-08-17 12:00:00'),(100259,148,5.10,35,'Completed','2022-08-25 12:00:00'),(100264,148,4.80,40,'Completed','2022-08-26 12:00:00'),(100305,300,10.00,15,'Completed','2022-09-05 12:00:00'),(100400,178,9.90,15,'Completed','2022-09-09 12:00:00'),(100565,265,25.60,5,'Completed','2022-12-19 12:00:00');\nINSERT INTO users VALUES (111,'San Francisco','rrok10@gmail.com','2021-08-03 12:00:00'),(148,'Boston','sailor9820@gmail.com','2021-08-20 12:00:00'),(178,'San Francisco','harrypotterfan182@gmail.com','2022-01-05 12:00:00'),(265,'Denver','shadower_@hotmail.com','2022-02-26 12:00:00'),(300,'San Francisco','houstoncowboy1122@hotmail.com','2022-06-30 12:00:00');",
+  "expected_query": "SELECT city, COUNT(U.user_id) AS total_orders FROM users U INNER JOIN trades T ON U.user_id=T.user_id WHERE status='Completed' GROUP BY city ORDER BY total_orders DESC LIMIT 3;",
+  "solution_explanation": "We join the users table with the trades table on user_id, filter for rows where the trade status is 'Completed', group by city, and count the number of completed orders per city. Finally, we sort the results in descending order and limit to the top 3 cities.",
+  "row_order_matters": true,
+  "column_order_matters": false,
+  "hints": [
+    "Join users and trades using user_id.",
+    "Filter only trades with status = 'Completed'.",
+    "Group by city and count orders, then sort in descending order.",
+    "Use LIMIT 3 to return only the top 3 cities."
+  ]
+},
+{
+  "id": 12,
+  "title": "Data Science Skills",
+  "company_name": "LinkedIn",
+  "difficulty": "Easy",
+  "tags": ["SQL", "Filtering", "Aggregation"],
+  "question_text": "Given a table of candidates and their skills, you're tasked with finding the candidates best suited for an open Data Science job. You want to find candidates who are proficient in Python, Tableau, and PostgreSQL. Write a SQL query to list the candidates who possess all of the required skills for the job. Sort the output by candidate ID in ascending order.",
+  "schema": "CREATE TABLE candidates (candidate_id INT, skill VARCHAR(50));",
+  "sample_data": "INSERT INTO candidates VALUES (123,'Python'),(123,'Tableau'),(123,'PostgreSQL'),(234,'R'),(234,'PowerBI'),(234,'SQL Server'),(345,'Python'),(345,'Tableau');",
+  "expected_query": "SELECT candidate_id FROM ( SELECT candidate_id, SUM(CASE WHEN skill='Python' OR skill='Tableau' OR skill='PostgreSQL' THEN 1 ELSE 0 END) AS proficiency FROM candidates GROUP BY candidate_id ) temp WHERE proficiency=3 ORDER BY candidate_id;",
+  "solution_explanation": "We group by candidate_id and count how many of the required skills (Python, Tableau, PostgreSQL) each candidate has. If the sum of matching skills equals 3, it means the candidate has all required skills. We then filter and order the results by candidate_id.",
+  "row_order_matters": true,
+  "column_order_matters": false,
+  "hints": [
+    "Use CASE WHEN inside SUM to check for each required skill.",
+    "Group by candidate_id to aggregate skills per candidate.",
+    "Only return candidates with proficiency = 3 (all required skills)."
+  ]
+}
+
+
+
+
+
+
+
+
+]
