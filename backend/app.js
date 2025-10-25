@@ -39,7 +39,11 @@ admin.initializeApp({
 const app = express();
 
 app.use(bodyParser.json());
-app.use(cors());
+app.use(cors({
+  origin: 'https://datalemur-i9y5.vercel.app', // अपना Vercel URL यहाँ डालें
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  credentials: true // यदि आप Cookies या Authorization Headers भेज रहे हैं
+}));
 
 
 // Routes
