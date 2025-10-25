@@ -1,26 +1,24 @@
+const admin = require("firebase-admin"); // 👈 I've added this
 const path = require("path");
 const fs = require("fs");
 const { getDatabase } = require("../config/db");
 const compareResults = require("../utils/compareResults");
 
-
 let questions;
 try {
   const questionsFile = path.join(__dirname, "..", "questions.json");
-  // EDGE CASE: Check if file exists before reading
   if (!fs.existsSync(questionsFile)) {
     console.error("questions.json not found! Exiting.");
     process.exit(1);
   }
   const fileContent = fs.readFileSync(questionsFile, "utf-8");
-  // EDGE CASE: Check if JSON is valid
   questions = JSON.parse(fileContent);
 } catch (error) {
   console.error("Failed to load or parse questions.json:", error.message);
   process.exit(1);
 }
 
-// Get all questions
+// Get all questions (no changes here)
 const getAllQuestions = (req, res) => {
   const list = questions.map(q => ({
     id: q.id,
@@ -32,9 +30,8 @@ const getAllQuestions = (req, res) => {
   res.json(list);
 };
 
-// Get question by ID
+// Get question by ID (no changes here)
 const getQuestionById = (req, res) => {
-  // Using loose equality is fine here since q.id is a number and req.params.id is a string
   const q = questions.find(q => q.id == req.params.id);
   if (!q) {
     return res.status(404).json({ error: "Question not found" });
@@ -42,70 +39,86 @@ const getQuestionById = (req, res) => {
   res.json(q);
 };
 
-// Run user query
+// Run user query (UPDATED)
 const runQuery = async (req, res) => {
-  const { questionId, userQuery } = req.body;
+  // 1. Frontend se data nikaalein
+  // 'isSubmitting' flag yahaan add kiya gaya hai
+  const { questionId, userQuery, isSubmitting } = req.body;
 
+  // 2. Basic validation: Check karein ki zaroori data mila ya nahi
   if (!questionId || !userQuery || typeof userQuery !== "string") {
-    return res.status(400).json({ error: "questionId and userQuery are required" });
+    return res
+      .status(400)
+      .json({ error: "questionId and userQuery are required" });
   }
 
-  const q = questions.find(q => q.id == questionId);
+  // 3. Di gayi ID se question dhoondhein
+  const q = questions.find((q) => q.id == questionId);
   if (!q) {
     return res.status(404).json({ error: "Question not found" });
   }
 
-  
-  // SECURITY: Expanded list and case-insensitive check for dangerous queries
-  const forbiddenKeywords = ["DROP", "DELETE", "ALTER", "TRUNCATE", "UPDATE", "INSERT", "CREATE", "GRANT", "REVOKE"];
+  // 4. Security Check: Khatarnaak keywords ko block karein
+  const forbiddenKeywords = [
+    "DROP",
+    "DELETE",
+    "ALTER",
+    "TRUNCATE",
+    "UPDATE",
+    "INSERT",
+    "CREATE",
+    "GRANT",
+    "REVOKE",
+  ];
   const upperCaseUserQuery = userQuery.toUpperCase();
-  if (forbiddenKeywords.some(word => upperCaseUserQuery.includes(word))) {
-    return res.status(400).json({ error: "Destructive or data-modifying queries are not allowed." });
+  if (forbiddenKeywords.some((word) => upperCaseUserQuery.includes(word))) {
+    return res
+      .status(400)
+      .json({ error: "Destructive or data-modifying queries are not allowed." });
   }
 
+  // 5. Main logic: Database se connect karein aur query run karein
   try {
+    // Har query ke liye ek naya, saaf database setup karein
     const db = await getDatabase(questionId, q.schema, q.sample_data);
 
-    
-    // RESOURCE MANAGEMENT: Automatically add a LIMIT to user queries to prevent crashes
+    // 6. User ki query ko safe banaayein (LIMIT add karna, etc.)
     let safeUserQuery = userQuery.trim();
-    // Remove trailing semicolon if it exists
-    if (safeUserQuery.endsWith(';')) {
+    if (safeUserQuery.endsWith(";")) {
       safeUserQuery = safeUserQuery.slice(0, -1);
     }
-    // Add LIMIT only if one doesn't already exist
+    // Agar user ne LIMIT nahi lagaya hai, toh server crash se bachaane ke liye add karein
     if (!/LIMIT\s+\d+/i.test(safeUserQuery)) {
       safeUserQuery += " LIMIT 200";
     }
-    // Add semicolon back
-    safeUserQuery += ';';
+    safeUserQuery += ";";
 
-
+    // 7. User ki query run karein
     let userRes;
     try {
-      // RESOURCE MANAGEMENT (Suggestion): Add a query timeout
-      // This depends on your DB driver, e.g., for 'pg' it might look like this:
-      // userRes = await db.query({ text: safeUserQuery, query_timeout: 5000 }); // 5 seconds timeout
       userRes = await db.query(safeUserQuery);
     } catch (err) {
-     
-      // ERROR HANDLING: Log the detailed error for debugging
+      // Agar user ki SQL query galat hai (syntax error)
       console.error("Database Query Error:", err.message);
-      // Send a user-friendly error message
-      return res.status(400).json({ error: "Invalid SQL query. Please check your syntax." });
+      return res
+        .status(400)
+        .json({ error: "Invalid SQL query. Please check your syntax." });
     }
 
+    // 8. User ke result ko format karein
     const userResult = {
-      columns: userRes.fields?.map(f => f.name) || [],
-      values: userRes.rows?.map(r => Object.values(r)) || []
+      columns: userRes.fields?.map((f) => f.name) || [],
+      values: userRes.rows?.map((r) => Object.values(r)) || [],
     };
 
+    // 9. Sahi answer (expected query) ko run karein
     const expRes = await db.query(q.expected_query);
     const expectedResult = {
-      columns: expRes.fields.map(f => f.name),
-      values: expRes.rows.map(r => Object.values(r))
+      columns: expRes.fields.map((f) => f.name),
+      values: expRes.rows.map((r) => Object.values(r)),
     };
 
+    // 10. Dono results ko compare karein
     const isCorrect = compareResults(
       userResult,
       expectedResult,
@@ -113,6 +126,28 @@ const runQuery = async (req, res) => {
       q.column_order_matters
     );
 
+    // 11. (IMPORTANT) Conditional Submission Logic
+    // Database mein sirf tab save karein jab 'isSubmitting' true ho
+    if (isSubmitting) {
+      try {
+        const submissionData = {
+          userId: req.user.uid, // Auth middleware se user ID lein
+          problemId: q.id,
+          userCode: userQuery, // User ki original query save karein
+          status: isCorrect ? "Correct" : "Incorrect", // Boolean ko string mein badlein
+          submittedAt: admin.firestore.FieldValue.serverTimestamp(), // Server time
+        };
+
+        // Firestore ke 'submission' collection mein data add karein
+        await admin.firestore().collection("submission").add(submissionData);
+      } catch (dbError) {
+        // Agar submission save nahi hota hai, toh error log karein,
+        // lekin user ko result dikhaane se na rokein.
+        console.error("Failed to save submission:", dbError);
+      }
+    }
+
+    // 12. Final response frontend ko bhej dein
     res.json({
       userResult,
       expectedResult,
@@ -120,16 +155,18 @@ const runQuery = async (req, res) => {
       feedback: isCorrect
         ? "Correct!"
         : userResult.values.length === 0
-          ? "No rows returned, check your query"
-          : "Try again"
+        ? "No rows returned, check your query"
+        : "Try again",
     });
   } catch (err) {
-    
-    // ERROR HANDLING: Log the full error for debugging
+    // 13. Koi bhi server-level error (jaise DB connection fail)
     console.error("Server Error in runQuery:", err);
-    // Send a generic error message to the user
-    res.status(500).json({ error: "An unexpected server error occurred. Please try again later." });
+    res
+      .status(500)
+      .json({
+        error: "An unexpected server error occurred. Please try again later.",
+      });
   }
 };
-
 module.exports = { getAllQuestions, getQuestionById, runQuery };
+

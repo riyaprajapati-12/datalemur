@@ -2,24 +2,19 @@
 
 [
   {
-    "id": 1,
-    "title": "Apple Pay Volume",
-    "company_name": "Visa",
-    "difficulty": "Medium",
-    "tags": ["SQL", "Aggregation"],
-    "question_text": "Calculate the total transaction volume for each merchant where the transaction was performed via Apple Pay. Output merchant_id and total transactions. For merchants with no Apple Pay transactions, output 0. Display result in descending order of volume.",
-    "schema": "CREATE TABLE transactions (merchant_id INT, transaction_amount INT, payment_method VARCHAR(50));",
-    "sample_data": "INSERT INTO transactions VALUES (1,600,'Contactless Chip'),(1,850,'Apple Pay'),(1,500,'Apple Pay'),(2,560,'Magstripe'),(2,400,'Samsung Pay'),(4,1200,'apple pay');",
-    "expected_query": "SELECT merchant_id, SUM(CASE WHEN LOWER(payment_method)='apple pay' THEN transaction_amount ELSE 0 END) AS volume FROM transactions GROUP BY merchant_id ORDER BY volume DESC;",
-    "solution_explanation": "We use a CASE WHEN inside SUM to add transaction_amount only when the payment_method equals 'Apple Pay' (ignoring case by using LOWER). For non-Apple Pay transactions, we add 0. Grouping by merchant_id ensures we compute totals per merchant. Finally, ORDER BY volume DESC sorts merchants by highest transaction volume.",
-    "row_order_matters": true,
-    "column_order_matters": false,
-    "hints": [
-      "Use CASE WHEN to count only Apple Pay transactions.",
-      "Be careful with text case differences like 'Apple Pay' vs 'apple pay'.",
-      "Group results by merchant_id and use SUM."
-    ]
-  },
+  "id": 1,
+  "title": "Second Day Confirmation",
+  "company_name": "TikTok",
+  "difficulty": "Easy",
+  "question_text": "New users register on TikTok using their emails and receive a text to confirm their account. Given tables for emails and texts, write a query to find the user IDs who did not confirm on the first day of signup but confirmed on the second day.",
+  "schema": "CREATE TABLE emails (email_id INTEGER, user_id INTEGER, signup_date TIMESTAMP); CREATE TABLE texts (text_id INTEGER, email_id INTEGER, signup_action VARCHAR(20), action_date TIMESTAMP);",
+  "sample_data": "INSERT INTO emails VALUES (125, 7771, '2022-06-14 00:00:00'), (433, 1052, '2022-07-09 00:00:00'); INSERT INTO texts VALUES (6878, 125, 'Confirmed', '2022-06-14 00:00:00'), (6997, 433, 'Not Confirmed', '2022-07-09 00:00:00'), (7000, 433, 'Confirmed', '2022-07-10 00:00:00');",
+  "expected_query": "SELECT user_id FROM emails E INNER JOIN texts T ON E.email_id=T.email_id WHERE signup_action='Confirmed' AND DATE_PART('day', action_date-signup_date)=1;",
+  "solution_explanation": "1. Join the emails and texts tables on email_id to get user signup and text confirmation info.\n2. Filter the texts where signup_action is 'Confirmed'.\n3. Use DATE_PART to calculate the difference in days between action_date and signup_date.\n4. Keep only those users where the difference is exactly 1 day (confirmed on the second day).\n5. Select the user_id of these users.",
+  "row_order_matters": false,
+  "column_order_matters": false,
+  "hints": ["Use a JOIN between emails and texts on email_id.", "Filter text actions where signup_action is 'Confirmed' and the day difference is 1.", "Use DATE_PART or equivalent to calculate the day difference."]
+},
   {
     "id": 2,
     "title": "Average Review Ratings",
@@ -230,7 +225,211 @@
     "Group by candidate_id to aggregate skills per candidate.",
     "Only return candidates with proficiency = 3 (all required skills)."
   ]
+},
+{
+"id": 13,
+"title": "Histogram of Users and Purchases",
+"company_name": "Spotify",
+"difficulty": "Medium",
+"question_text": "Assume you are given a table 'user_transactions' containing transactions from users. Bucketing users based on their latest transaction date, write a query to obtain the number of users who made a purchase and the total number of products bought for each transaction date. Output the transaction date, number of users, and number of products.",
+"schema": "CREATE TABLE user_transactions (product_id INTEGER, user_id INTEGER, spend DECIMAL, transaction_date TIMESTAMP);",
+"sample_data": "INSERT INTO user_transactions VALUES (3673,123,68.90,'2022-07-08 12:00:00'),(9623,123,274.10,'2022-07-08 12:00:00'),(1467,115,19.90,'2022-07-08 12:00:00'),(2513,159,25.00,'2022-07-08 12:00:00'),(1452,159,74.50,'2022-07-10 12:00:00');",
+"expected_query": "WITH CTE1 AS (SELECT *, RANK() OVER (PARTITION BY user_id ORDER BY transaction_date DESC) AS RN FROM user_transactions) SELECT transaction_date, COUNT(DISTINCT user_id) AS number_of_users, COUNT(product_id) AS number_of_products FROM CTE1 WHERE RN=1 GROUP BY transaction_date;",
+"solution_explanation": "1. Use a CTE (CTE1) to rank each user's transactions in descending order of transaction_date using RANK() OVER (PARTITION BY user_id ORDER BY transaction_date DESC). 2. Filter to only keep the latest transaction for each user (RN = 1). 3. Group the results by transaction_date. 4. Count distinct user_ids to get the number of users per date. 5. Count product_id to get the total number of products per date.",
+"row_order_matters": false,
+"column_order_matters": false,
+"hints": ["Use a window function like RANK() to identify the latest transaction per user.", "Remember to count DISTINCT user_ids to get unique users.", "Group by transaction_date to aggregate per date.", "Count product_id to get the total number of products purchased."]
+},
+{
+"id": 14,
+"title": "Invalid Search Results",
+"company_name": "Amazon",
+"difficulty": "Medium",
+"question_text": "Given a table 'search_category' containing the number of searches attempted and the percentage of invalid searches by country, write a query to calculate the percentage of invalid search results. Output the country (ascending), total number of searches, and percentage of invalid searches rounded to 2 decimal places. Exclude rows where either num_search or invalid_result_pct is NULL.",
+"schema": "CREATE TABLE search_category (country STRING, search_cat STRING, num_search INTEGER, invalid_result_pct DECIMAL);",
+"sample_data": "INSERT INTO search_category VALUES ('UK','home',NULL,NULL),('UK','tax',98000,1.00),('UK','travel',100000,3.25);",
+"expected_query": "WITH CTE1 AS (SELECT , 0.01invalid_result_pct*num_search AS num_invalid FROM search_category WHERE num_search IS NOT NULL AND invalid_result_pct IS NOT NULL) SELECT country, SUM(num_search) AS total_search, ROUND(SUM(num_invalid)*1.00/SUM(num_search)*100, 2) AS invalid_result_pct FROM CTE1 GROUP BY country;",
+"solution_explanation": "1. Use a CTE (CTE1) to calculate the actual number of invalid searches per row: num_invalid = 0.01 * invalid_result_pct * num_search. 2. Exclude rows where num_search or invalid_result_pct is NULL. 3. Group the remaining rows by country. 4. Sum num_search to get total_search per country. 5. Sum num_invalid, divide by total_search, multiply by 100, and round to 2 decimal places to get the invalid_result_pct per country.",
+"row_order_matters": true,
+"column_order_matters": false,
+"hints": ["Filter out rows where num_search or invalid_result_pct is NULL.", "Calculate invalid searches per row using 0.01 * invalid_result_pct * num_search.", "Group by country to aggregate totals.", "Compute percentage as (sum of invalid searches / total searches) * 100 and round to 2 decimals."]
+},
+{
+"id": 15,
+"title": "Compensation Outliers",
+"company_name": "Accenture",
+"difficulty": "Medium",
+"question_text": "Your team is tasked with identifying employees who are potentially overpaid or underpaid. An employee is considered overpaid if their salary is more than twice the average salary for their title, and underpaid if it is less than half the average. Write a query to list each compensation outlier with their employee ID, salary, and whether they are potentially overpaid or underpaid.",
+"schema": "CREATE TABLE employee_pay (employee_id INTEGER, salary INTEGER, title VARCHAR);",
+"sample_data": "INSERT INTO employee_pay VALUES (101,80000,'Data Analyst'),(102,90000,'Data Analyst'),(103,100000,'Data Analyst'),(104,30000,'Data Analyst'),(105,120000,'Data Scientist'),(106,100000,'Data Scientist'),(107,80000,'Data Scientist'),(108,310000,'Data Scientist');",
+"expected_query": "WITH CTE1 AS (SELECT title, AVG(salary) AS avg_salary FROM employee_pay GROUP BY title), CTE2 AS (SELECT employee_id, salary, avg_salary, CASE WHEN salary>2*avg_salary THEN 'Overpaid' WHEN salary<0.5*avg_salary THEN 'Underpaid' ELSE NULL END AS status FROM employee_pay E INNER JOIN CTE1 ON E.title=CTE1.title) SELECT employee_id, salary, status FROM CTE2 WHERE status IS NOT NULL;",
+"solution_explanation": "1. Calculate the average salary per title using a CTE (CTE1). 2. Join the employee_pay table with CTE1 to get each employee's title average. 3. Use a CASE statement to classify employees as 'Overpaid' if salary > 2 * avg_salary and 'Underpaid' if salary < 0.5 * avg_salary. 4. Exclude employees who do not meet either condition. 5. Select employee_id, salary, and status for the final output.",
+"row_order_matters": false,
+"column_order_matters": false,
+"hints": ["Compute average salary per title first.", "Use a CASE statement to identify overpaid and underpaid employees.", "Join the averages with the original employee table.", "Filter out employees who are neither overpaid nor underpaid."]
+},
+{
+"id": 16,
+"title": "Consulting Bench Time",
+"company_name": "Google",
+"difficulty": "Medium",
+"question_text": "In consulting, 'bench time' refers to the gap between client engagements. Write a query to calculate the total bench days in 2021 for each consultant. Only consider employees who are consultants, and assume each consultant is staffed to only one engagement at a time.",
+"schema": "CREATE TABLE staffing (employee_id INTEGER, is_consultant BOOLEAN, job_id INTEGER); CREATE TABLE consulting_engagements (job_id INTEGER, client_id INTEGER, start_date DATE, end_date DATE, contract_amount INTEGER);",
+"sample_data": "INSERT INTO staffing VALUES (111,true,7898),(121,false,6789),(156,true,4455); INSERT INTO consulting_engagements VALUES (7898,20076,'2021-05-25','2021-06-30',11290),(6789,20045,'2021-06-01','2021-11-12',33040),(4455,20001,'2021-01-25','2021-05-31',31839);",
+"expected_query": "WITH CTE1 AS (SELECT *, C.job_id AS job_id2 FROM consulting_engagements C INNER JOIN staffing S ON C.job_id=S.job_id WHERE is_consultant='true' AND DATE_PART('year', start_date)=2021) SELECT employee_id, 365-SUM(end_date::DATE-start_date::DATE)-COUNT(job_id2) AS bench_days FROM CTE1 GROUP BY employee_id;",
+"solution_explanation": "1. Join the consulting_engagements table with staffing to filter only consultants. 2. Filter engagements that start in 2021. 3. For each employee, calculate the total days worked by subtracting start_date from end_date and adjusting for inclusive dates by subtracting the count of engagements. 4. Subtract total worked days from 365 to get bench_days for each consultant. 5. Group by employee_id to get the final output.",
+"row_order_matters": false,
+"column_order_matters": false,
+"hints": ["Filter only consultants using is_consultant flag.", "Consider only engagements starting in 2021.", "Calculate days worked as end_date - start_date.", "Subtract total worked days from 365 to get bench days."]
+},
+{
+"id": 17,
+"title": "Fill Missing Product Categories",
+"company_name": "Amazon",
+"difficulty": "Medium",
+"question_text": "In a retailer's product catalog, some products have missing category values. Write a SQL query to fill in the missing categories based on the last known category above each product. Assume that each category appears only once in the column and products of the same category are grouped together, with the first product in each category always having a defined category.",
+"schema": "CREATE TABLE products (product_id INT, category VARCHAR, name VARCHAR);",
+"sample_data": "INSERT INTO products VALUES (1, 'Shoes', 'Sperry Boat Shoe'), (2, NULL, 'Adidas Stan Smith'), (3, NULL, 'Vans Authentic'), (4, 'Jeans', 'Levi 511'), (5, NULL, 'Wrangler Straight Fit'), (6, 'Shirts', 'Lacoste Classic Polo'), (7, NULL, 'Nautica Linen Shirt');",
+"expected_query": "WITH grouped_table AS (SELECT product_id, category, name, COUNT(category) OVER (ORDER BY product_id) AS _grp FROM products), fillingCategory AS (SELECT product_id, category, name, _grp, FIRST_VALUE(category) OVER (PARTITION BY _grp ORDER BY product_id) AS filled_category FROM grouped_table) SELECT product_id, filled_category AS category, name FROM fillingCategory;",
+"solution_explanation": "1. Use COUNT(category) as a window function over the ordered product_id to create a grouping (_grp) that increments every time a non-NULL category appears. 2. Partition by this group and use FIRST_VALUE(category) to get the first non-NULL category in each group. 3. Replace the original category with the filled_category for all rows to fill missing values. 4. Select product_id, the filled category, and product name for the final output.",
+"row_order_matters": true,
+"column_order_matters": false,
+"hints": ["Use a window function to identify groups of consecutive products with the same category.", "Use FIRST_VALUE() over the group to fill NULL category values.", "Ordering by product_id is crucial to maintain the sequence of products."]
+},
+{
+"id": 18,
+"title": "Count Users with High-Value First Transaction",
+"company_name": "PayPal",
+"difficulty": "Medium",
+"question_text": "Given a table of user transactions, write a SQL query to find the number of users whose very first transaction was $50 or more. Use the transaction_date to determine the first transaction for each user, accounting for cases where a user may have multiple transactions on the same day.",
+"schema": "CREATE TABLE user_transactions (transaction_id INT, user_id INT, spend DECIMAL, transaction_date TIMESTAMP);",
+"sample_data": "INSERT INTO user_transactions VALUES (759274, 111, 49.50, '2022-02-03 00:00:00'), (850371, 111, 51.00, '2022-03-15 00:00:00'), (615348, 145, 36.30, '2022-03-22 00:00:00'), (137424, 156, 151.00, '2022-04-04 00:00:00'), (248475, 156, 87.00, '2022-04-16 00:00:00');",
+"expected_query": "WITH ranking_transactions AS (SELECT *, ROW_NUMBER() OVER(PARTITION BY user_id ORDER BY transaction_date) AS RN FROM user_transactions ORDER BY user_id, transaction_date) SELECT COUNT(user_id) AS users FROM ranking_transactions WHERE RN = 1 AND spend >= 50;",
+"solution_explanation": "1. Use ROW_NUMBER() partitioned by user_id and ordered by transaction_date to assign a rank to each transaction per user, identifying the first transaction as RN = 1. 2. Filter the rows to only include the first transaction per user. 3. Further filter to include only transactions with spend >= 50. 4. Count the number of distinct users that meet the criteria.",
+"row_order_matters": true,
+"column_order_matters": false,
+"hints": ["Use ROW_NUMBER() to rank transactions per user by date.", "Filter for the first transaction using RN = 1.", "Apply a condition on spend to count only high-value first transactions."]
+},
+{
+"id": 19,
+"title": "Top Profitable Drugs",
+"company_name": "CVS Health",
+"difficulty": "Easy",
+"question_text": "CVS Health wants to analyze pharmacy sales to identify which drugs generate the highest profits. Each drug is manufactured by only one company. Calculate the top 3 drugs ranked by their total profit, defined as the difference between total sales and cost of goods sold (cogs). Display the output from the highest to lowest profit.",
+"schema": "CREATE TABLE pharmacy_sales(product_id INT, units_sold INT, total_sales DECIMAL, cogs DECIMAL, manufacturer VARCHAR, drug VARCHAR);",
+"sample_data": "INSERT INTO pharmacy_sales VALUES (9,37410,293452.54,208876.01,'Eli Lilly','Zyprexa'),(34,94698,600997.19,521182.16,'AstraZeneca','Surmontil'),(61,77023,500101.61,419174.97,'Biogen','Varicose Relief'),(136,144814,1084258,1006447.73,'Biogen','Burkhart');",
+"expected_query": "SELECT drug, SUM(total_sales) - SUM(cogs) AS total_profit FROM pharmacy_sales GROUP BY drug ORDER BY total_profit DESC LIMIT 3;",
+"solution_explanation": "1) The question defines profit as total sales minus cost of goods sold (cogs). 2) Since a drug may appear multiple times in the table, use SUM(total_sales) - SUM(cogs) to get the total profit per drug. 3) Group the data by drug to ensure profit is aggregated correctly. 4) Order the results in descending order of profit. 5) Limit the output to the top 3 drugs to get the most profitable ones.",
+"row_order_matters": true,
+"column_order_matters": false,
+"hints": [
+"Remember that profit is total_sales minus cogs.",
+"Use GROUP BY drug to ensure correct aggregation per drug.",
+"Apply ORDER BY in descending order and LIMIT 3 to extract the top three."
+]
+},
+{
+"id": 20,
+"title": "Signup to Purchase Conversion (7 Days)",
+"company_name": "Etsy",
+"difficulty": "Medium",
+"question_text": "You are given two tables containing user signup and purchase information on Etsy. Calculate the percentage of users who signed up and completed at least one purchase within 7 days of signing up. Round the final result to 2 decimal places. Users who signed up but did not purchase anything should still be counted in the denominator.",
+"schema": "CREATE TABLE signups(user_id INT, signup_date TIMESTAMP); CREATE TABLE user_purchases(user_id INT, product_id INT, purchase_amount DECIMAL, purchase_date TIMESTAMP);",
+"sample_data": "INSERT INTO signups VALUES (445,'2022-06-21 12:00:00'),(742,'2022-06-19 12:00:00'),(648,'2022-06-24 12:00:00'),(789,'2022-06-27 12:00:00'),(123,'2022-06-27 12:00:00'); INSERT INTO user_purchases VALUES (244,7575,45.00,'2022-06-22 12:00:00'),(742,1241,50.00,'2022-06-28 12:00:00'),(648,3632,55.50,'2022-06-25 12:00:00'),(123,8475,67.30,'2022-06-29 12:00:00'),(244,2341,74.10,'2022-06-30 12:00:00');",
+"expected_query": "WITH first_week_purchases AS (SELECT s.user_id FROM signups s LEFT JOIN user_purchases up ON s.user_id = up.user_id AND up.purchase_date BETWEEN s.signup_date AND s.signup_date + INTERVAL '7 days') SELECT ROUND(100.0 * COUNT(DISTINCT fwp.user_id) / COUNT(DISTINCT s.user_id), 2) AS single_purchase_pct FROM signups s LEFT JOIN first_week_purchases fwp ON s.user_id = fwp.user_id;",
+"solution_explanation": "1) Join the signups table with purchases on user_id to check which purchases happened within 7 days of signup. 2) Apply a date filter: purchase_date BETWEEN signup_date and signup_date + 7 days. 3) Use a CTE (first_week_purchases) to isolate users who satisfied the condition. 4) In the final query, divide the count of distinct users who purchased within 7 days by the total number of signups. 5) Multiply by 100 and round the result to 2 decimal places to get the percentage.",
+"row_order_matters": false,
+"column_order_matters": false,
+"hints": [
+"Use a date filter comparing purchase_date with signup_date and signup_date + 7 days.",
+"Make sure to count distinct users to avoid double counting multiple purchases by the same user.",
+"Divide by total signups to get the percentage, not total purchases."
+]
+},
+{
+"id": 21,
+"title": "Find Concurrent User Sessions",
+"company_name": "Pinterest",
+"difficulty": "Hard",
+"question_text": "You are given a sessions table with start and end timestamps. Write a query to return the session IDs and the number of other sessions that overlap (run concurrently) with each session. Sessions that have identical start and end times should not be considered concurrent. The results should be ordered by the number of concurrent sessions in descending order.",
+"schema": "CREATE TABLE sessions (session_id INTEGER, start_time TIMESTAMP, end_time TIMESTAMP);",
+"sample_data": "INSERT INTO sessions VALUES (746382, '2024-01-02 12:00:00', '2024-02-01 16:48:00'), (143145, '2024-01-02 14:25:00', '2024-02-01 15:05:00'), (134514, '2024-01-02 15:23:00', '2024-02-01 18:15:00'), (242354, '2024-01-02 21:34:00', '2024-03-01 00:11:00'), (143256, '2024-01-06 06:55:00', '2024-01-06 09:05:00');",
+"expected_query": "SELECT s1.session_id, COUNT(s2.session_id) AS concurrent_sessions FROM sessions s1 JOIN sessions s2 ON s1.session_id != s2.session_id AND ((s2.start_time < s1.end_time AND s2.end_time > s1.start_time) AND NOT (s1.start_time = s2.start_time AND s1.end_time = s2.end_time)) GROUP BY s1.session_id ORDER BY concurrent_sessions DESC;",
+"solution_explanation": "1) Start with a self-join of the sessions table to compare each session against every other session. 2) Exclude comparisons where session_id is the same. 3) Check for overlapping intervals: a session is concurrent if its start_time is before the other's end_time AND its end_time is after the other's start_time. 4) Add a condition to exclude cases where both start_time and end_time are identical, as these should not count as concurrent. 5) Group by the original session_id and count concurrent sessions for each. 6) Finally, order results by the number of concurrent sessions in descending order.",
+"row_order_matters": true,
+"column_order_matters": false,
+"hints": [
+"Use a self-join to compare each session against all other sessions.",
+"Two sessions overlap if one's start_time is before the other's end_time AND its end_time is after the other's start_time.",
+"Be sure to exclude cases where start and end times are exactly the same."
+]
+},
+{
+"id": 22,
+"title": "Recommend Top Page to User Based on Friends' Likes",
+"company_name": "Facebook",
+"difficulty": "Medium",
+"question_text": "Given two tables: one that records user friendships and another that stores which pages users follow, write a query to recommend a page to each user. The recommendation should be based on pages liked by the user's friends but not already liked by the user. Only recommend the single top page per user, where top means the page with the highest number of followers overall. Return the user_id and the recommended page, ordered by user_id in ascending order.",
+"schema": "CREATE TABLE friendship (id INTEGER, user_id VARCHAR, friend_id VARCHAR); CREATE TABLE page_following (id INTEGER, user_id VARCHAR, page_id VARCHAR);",
+"sample_data": "INSERT INTO friendship VALUES (1, 'alice', 'bob'), (2, 'alice', 'charles'), (3, 'alice', 'david'); INSERT INTO page_following VALUES (1, 'alice', 'google'), (2, 'alice', 'facebook'), (3, 'bob', 'google'), (4, 'bob', 'linkedin'), (5, 'bob', 'facebook');",
+"expected_query": "WITH friend_pages AS (SELECT f.user_id, pf.page_id FROM friendship f JOIN page_following pf ON f.friend_id = pf.user_id), filtered_pages AS (SELECT fp.user_id, fp.page_id FROM friend_pages fp LEFT JOIN page_following pf ON fp.user_id = pf.user_id AND fp.page_id = pf.page_id WHERE pf.page_id IS NULL), follower_page_count AS (SELECT fp.user_id, fp.page_id, COUNT(DISTINCT pf.user_id) AS follower_count FROM filtered_pages fp JOIN page_following pf ON fp.page_id = pf.page_id GROUP BY fp.user_id, fp.page_id), ranked_pages AS (SELECT user_id, page_id, ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY follower_count DESC) AS rank FROM follower_page_count) SELECT user_id, page_id AS recommended_pages FROM ranked_pages WHERE rank = 1 ORDER BY user_id;",
+"solution_explanation": "1) First, join friendship with page_following to find pages liked by a user's friends. 2) Exclude pages already liked by the user using a LEFT JOIN and filtering NULL values. 3) For each (user, page) pair, count how many distinct users follow that page to measure its popularity. 4) Rank pages for each user by follower_count in descending order. 5) Select only the top-ranked page per user. 6) Finally, order the output by user_id to get the results in ascending order.",
+"row_order_matters": true,
+"column_order_matters": false,
+"hints": [
+"Start by collecting pages that a user's friends like.",
+"Make sure to exclude pages the user already follows.",
+"Rank the candidate pages by their total number of followers to pick the top one."
+]
+},
+{
+"id": 23,
+"title": "Weekly churn rate analysis for June 2022 signups",
+"company_name": "Facebook",
+"difficulty": "Hard",
+"question_text": "Facebook wants to calculate the churn rate of users who signed up in June 2022. A user is considered churned if their last login date is within 28 days of their signup date. Generate the churn rate per signup week in June 2022, where week 1 spans 30 May–5 Jun, week 2 is 6–12 Jun, and so on. Return the signup week number and churn rate rounded to two decimal places.",
+"schema": "CREATE TABLE users (user_id INT, signup_date TIMESTAMP, last_login TIMESTAMP);",
+"sample_data": "INSERT INTO users VALUES (1001,'2022-06-01 12:00:00','2022-07-05 12:00:00'),(1002,'2022-06-03 12:00:00','2022-06-15 12:00:00'),(1004,'2022-06-02 12:00:00','2022-06-15 12:00:00'),(1006,'2022-06-15 12:00:00','2022-06-27 12:00:00'),(1012,'2022-06-16 12:00:00','2022-07-22 12:00:00');",
+"expected_query": "WITH weekly_signups AS (SELECT FLOOR(EXTRACT(DAY FROM signup_date - DATE '2022-06-01')/7 + 1) AS signup_week, user_id, signup_date, last_login FROM users WHERE signup_date >= '2022-06-01' AND signup_date < '2022-07-01'), churn_calculation AS (SELECT signup_week, COUNT(user_id) AS total_users, SUM(CASE WHEN last_login <= signup_date + INTERVAL '28 days' THEN 1 ELSE 0 END) AS churned_users FROM weekly_signups GROUP BY signup_week) SELECT signup_week, ROUND(100.0 * churned_users / total_users, 2) AS churn_rate FROM churn_calculation ORDER BY signup_week;",
+"solution_explanation": "1) Restrict data to users who signed up between June 1 and June 30, 2022. 2) Derive the June-specific week number using FLOOR((DAY(signup_date - June 1)/7) + 1). 3) For each user, check if last_login is within 28 days of signup_date; if so, mark them as churned. 4) Group by signup week to count total signups and churned users. 5) Compute churn_rate = churned_users / total_users * 100, rounded to 2 decimals. 6) Order results by signup week.",
+"row_order_matters": true,
+"column_order_matters": false,
+"hints": [
+"Start by filtering only June 2022 signup records.",
+"Compute week numbers relative to June 1 using FLOOR and EXTRACT(DAY...).",
+"Use a CASE expression to classify churned users based on last_login within 28 days."
+]
+},
+{
+"id": 24,
+"title": "Average Vacant Days with Booking Adjustments",
+"company_name": "Wayfair",
+"difficulty": "Hard",
+"question_text": "The Airbnb strategy team wants to determine the average number of vacant days across active listings in 2021, accounting for Covid-19’s impact. For this calculation: only include properties marked as active, restrict booking durations to the boundaries of 2021 if check-in or check-out falls outside the year, and handle listings with no bookings as fully vacant. Finally, return the average vacant days across all active properties, rounded to the nearest whole number.",
+"schema": "CREATE TABLE bookings (listing_id INT, checkin_date TIMESTAMP, checkout_date TIMESTAMP); CREATE TABLE listings (listing_id INT, is_active INT);",
+"sample_data": "INSERT INTO bookings VALUES (1, '2021-08-17 00:00:00', '2021-08-19 00:00:00'), (1, '2021-08-19 00:00:00', '2021-08-25 00:00:00'), (2, '2021-08-19 00:00:00', '2021-09-22 00:00:00'), (3, '2021-12-23 00:00:00', '2022-01-05 00:00:00'); INSERT INTO listings VALUES (1, 1), (2, 0), (3, 1);",
+"expected_query": "WITH vacant_days_cte AS (SELECT l.listing_id, (365 - COALESCE(SUM(EXTRACT(DAY FROM (LEAST(checkout_date, DATE '2021-12-31') - GREATEST(checkin_date, DATE '2021-01-01')))), 0)) AS vacant_days FROM listings l LEFT JOIN bookings b ON l.listing_id = b.listing_id AND (b.checkin_date <= '2021-12-31' AND b.checkout_date >= '2021-01-01') WHERE l.is_active = 1 GROUP BY l.listing_id) SELECT ROUND(AVG(vacant_days)) AS avg_vacant_days FROM vacant_days_cte;",
+"solution_explanation": "1. Start by joining the listings and bookings tables on listing_id to match bookings with their respective properties.\n2. Include only active properties by filtering listings where is_active = 1.\n3. Adjust booking periods so that they fall within 2021 using GREATEST(checkin_date, '2021-01-01') and LEAST(checkout_date, '2021-12-31'). This ensures bookings crossing year boundaries are trimmed to 2021.\n4. Compute the total rented days per property by summing the adjusted booking durations.\n5. Subtract rented days from 365 to get each property’s vacant days. For listings with no bookings, COALESCE ensures the rented days sum defaults to 0.\n6. Take the average of vacant days across all active listings and round it to the nearest integer.",
+"row_order_matters": false,
+"column_order_matters": false,
+"hints": ["Make sure to restrict booking ranges to within 2021 using GREATEST and LEAST.", "Use COALESCE to handle properties with no bookings so they count as fully vacant.", "Remember to average across active listings only, not all listings." ]
+},
+{
+"id": 25,
+"title": "3-Topping Pizza Cost Calculation",
+"company_name": "Spotify",
+"difficulty": "Hard",
+"question_text": "You are given a list of pizza toppings with their costs. Generate all possible pizzas with exactly three different toppings and calculate the total price of those pizzas. Make sure toppings are listed in alphabetical order within each pizza. Display the results in descending order of cost, and if costs are tied, sort alphabetically by the pizza name.",
+"schema": "CREATE TABLE pizza_toppings (topping_name VARCHAR, ingredient_cost INT);",
+"sample_data": "INSERT INTO pizza_toppings VALUES ('Onion',2),('Pepperoni',5),('Sausage',4),('Chicken',3),('Mushroom',2);",
+"expected_query": "SELECT CONCAT(p1.topping_name, ',', p2.topping_name, ',', p3.topping_name) AS pizza, (p1.ingredient_cost + p2.ingredient_cost + p3.ingredient_cost) AS total_cost FROM pizza_toppings p1 JOIN pizza_toppings p2 ON p1.topping_name < p2.topping_name JOIN pizza_toppings p3 ON p2.topping_name < p3.topping_name ORDER BY total_cost DESC, pizza;",
+"solution_explanation": "1. Use self-joins on the pizza_toppings table to pick three distinct toppings. 2. Apply alphabetical ordering constraints (p1 < p2 and p2 < p3) to ensure unique combinations and alphabetical order of toppings. 3. Concatenate the three topping names into a single pizza name string. 4. Add up the ingredient costs of the three toppings to calculate total pizza cost. 5. Order the results by descending total_cost first. 6. For ties, use the pizza name in ascending order (alphabetical).",
+"row_order_matters": true,
+"column_order_matters": false,
+"hints": ["Ensure you only consider unique topping combinations with no duplicates.", "Use alphabetical constraints (p1 < p2 < p3) to avoid duplicates and maintain order.", "Order the result first by total cost, then by pizza name alphabetically."]
 }
+
+
 
 
 

@@ -1,73 +1,77 @@
-backend/serviceAccountKey.json
-# -------------------------------
-# Node.js
-# -------------------------------
+# ===================================================================
+# General
+# ===================================================================
+
+# Dependency directories
 node_modules/
+/backend/node_modules/
+/frontend/node_modules/
+
+# Build output
+dist/
+dist-ssr/
+build/
+out/
+.next/
+.cache/
+
+# Logs
+logs
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
-package-lock.json
-
-# -------------------------------
-# Build outputs
-# -------------------------------
-build/
-dist/
-.cache/
-.next/
-out/
-coverage/
-
-# -------------------------------
-# Firebase
-# -------------------------------
-.firebase/
-.firebase-debug.log
-.firebaserc
-functions/node_modules/
-functions/lib/
-functions/package-lock.json
-
-# -------------------------------
-# Environment variables
-# -------------------------------
-.env
-.env.local
-.env.development
-.env.production
-.env.test
-
-# -------------------------------
-# Logs
-# -------------------------------
-*.log
-logs
+lerna-debug.log*
 *.out
 *.pid
 *.seed
 *.gz
 
-# -------------------------------
-# OS files
-# -------------------------------
+# OS-generated files
 .DS_Store
 Thumbs.db
 
-# -------------------------------
-# IDE / Editor
-# -------------------------------
+# IDE / Editor directories
 .vscode/
+!.vscode/extensions.json
 .idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
 *.swp
 *.swo
 *.iml
 
-# -------------------------------
+# ===================================================================
+# Environment & Configuration
+# ===================================================================
+
+# Environment variables - IMPORTANT
+.env
+.env.*
+*.env.local
+# Exclude .env.example from being ignored
+!.env.example
+
+# Firebase
+.firebase/
+.firebase-debug.log
+.firebaserc
+
+# IMPORTANT: Service account keys should NEVER be committed
+backend/serviceAccountKey.json
+frontend/src/firebase.js
+
+# ===================================================================
+# Project-specific
+# ===================================================================
+
+# Test & Coverage
+coverage/
+
 # Misc
-# -------------------------------
+*.local
 *.bak
 *.tmp
-
-
-frontend/src/firebase.js

@@ -1,21 +1,29 @@
-// Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
 
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+import { initializeApp } from "firebase/app";
+import { 
+  getAuth, 
+  GoogleAuthProvider, 
+  GithubAuthProvider, 
+  signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult
+} from "firebase/auth";
+
 const firebaseConfig = {
-  apiKey: "AIzaSyC4jG4oGY0JlD8-nMsJx-Av8mHHPacam18",
-  authDomain: "datalemur-clone.firebaseapp.com",
-  projectId: "datalemur-clone",
-  storageBucket: "datalemur-clone.firebasestorage.app",
-  messagingSenderId: "44025995782",
-  appId: "1:44025995782:web:28b91cd6c5636491e49987",
-  measurementId: "G-MQEJBRTKD5"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
 };
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
+
+// --- EXPORT FIREBASE SERVICES ---
+export const auth = getAuth(app);
+export const googleProvider = new GoogleAuthProvider();
+export const githubProvider = new GithubAuthProvider();
+export { signInWithPopup, signInWithRedirect, getRedirectResult };

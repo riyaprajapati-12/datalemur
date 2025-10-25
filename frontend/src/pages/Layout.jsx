@@ -5,8 +5,9 @@ import axios from "axios";
 import Playground from "../components/Playground";
 import QuestionTabs from "../components/QuestionTabs";
 import Stopwatch from "../components/Stopwatch";
-// Import a database icon for the new logo
 import { FaDatabase, FaChevronLeft, FaChevronRight } from "react-icons/fa";
+import { auth } from "../firebase"; // 👈 1. Import auth
+import { onAuthStateChanged } from "firebase/auth"; // 👈 2. Import onAuthStateChanged
 
 const Layout = () => {
   const { id } = useParams();
@@ -22,21 +23,42 @@ const Layout = () => {
     setActiveTab("Question");
     setSubmissionData(null);
 
-    const fetchData = async () => {
-      try {
-        const res = await axios.get(`http://localhost:8081/api/question/${id}`);
-        setQuestion(res.data);
-        const allRes = await axios.get(`http://localhost:8081/api/questions`);
-        setTotalQuestions(allRes.data.length);
-      } catch (err) {
-        console.error("Error fetching question:", err);
-        setQuestion(null);
-      } finally {
-        setLoading(false);
+    // 3. Listen for authentication state
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        // 4. If user is logged in, fetch data
+        try {
+          const token = await user.getIdToken();
+          const config = {
+            headers: { Authorization: `Bearer ${token}` }
+          };
+
+          // 5. Make authenticated API calls
+          const questionRes = await axios.get(`http://localhost:8081/api/question/${id}`, config);
+          setQuestion(questionRes.data);
+
+          const allQuestionsRes = await axios.get(`http://localhost:8081/api/questions`, config);
+          setTotalQuestions(allQuestionsRes.data.length);
+
+        } catch (err) {
+          console.error("Error fetching question data:", err);
+          setQuestion(null);
+          if (err.response && (err.response.status === 401 || err.response.status === 403)) {
+            navigate("/login");
+          }
+        } finally {
+          setLoading(false);
+        }
+      } else {
+        // 6. If no user, redirect to login
+        console.log("No user found, redirecting to login.");
+        navigate("/login");
       }
-    };
-    fetchData();
-  }, [id]);
+    });
+
+    // Cleanup listener
+    return () => unsubscribe();
+  }, [id, navigate]);
 
   useEffect(() => {
     if (submissionData?.isCorrect) {
@@ -45,6 +67,7 @@ const Layout = () => {
       }, 2000);
       return () => clearTimeout(timer);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [submissionData]);
 
   const handleSubmission = (data) => {
@@ -92,9 +115,8 @@ const Layout = () => {
   return (
     <div className="flex flex-col h-screen bg-gray-50">
       <header className="flex items-center justify-between p-2 bg-white border-b shadow-sm flex-shrink-0">
-        {/* NEW: Stylish Logo Link instead of Home button */}
         <Link
-          to="/"
+          to="/home"
           className="flex items-center gap-2 text-gray-800 hover:text-indigo-600 transition-colors duration-200 ml-2 group"
           title="Back to Question List"
         >

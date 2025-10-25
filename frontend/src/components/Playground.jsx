@@ -1,24 +1,23 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import CodeMirror from "@uiw/react-codemirror";
 import { sql } from "@codemirror/lang-sql";
+import { EditorView } from "@codemirror/view"; // ✅ Import this for word wrap
 import axios from "axios";
 import { FaPlay, FaSyncAlt, FaCheck } from "react-icons/fa";
+import { auth } from "../firebase";
 
-const Playground = ({ questionId, totalQuestions, onSubmission, onReset }) => {
+const Playground = ({ questionId, onSubmission, onReset }) => {
   const [query, setQuery] = useState("-- Write your SQL query here");
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [submitLoading, setSubmitLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // EDGE CASE: Query validation function to avoid repetition
   const validateQuery = () => {
-    // 1. Check for empty or whitespace-only query
     if (!query.trim()) {
       setError("Query cannot be empty. Please write a query to proceed.");
       return false;
     }
-    // 2. Check for trailing semicolon
     if (!query.trim().endsWith(";")) {
       setError("Syntax Error: Your SQL query must end with a semicolon (;).");
       return false;
@@ -26,30 +25,40 @@ const Playground = ({ questionId, totalQuestions, onSubmission, onReset }) => {
     return true;
   };
 
+ // Is function ko ek "isSubmitting" flag lene ke liye modify karein
+const runAuthenticatedQuery = async (isSubmitting = false) => {
+  const user = auth.currentUser;
+  if (!user) {
+    setError("You are not signed in. Please log in again.");
+    return null;
+  }
+  const token = await user.getIdToken();
+
+  return axios.post(
+    "http://localhost:8081/api/run",
+    // Yahaan "isSubmitting" flag ko body mein add karein
+    { questionId, userQuery: query, isSubmitting },
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
+};
+
   const handleRun = async () => {
     setResult(null);
     setError("");
-
-    // EDGE CASE: Validate query before sending
     if (!validateQuery()) return;
 
     setLoading(true);
     try {
-      const res = await axios.post("http://localhost:8081/api/run", {
-        questionId,
-        userQuery: query,
-      });
-
-      // EDGE CASE: Handle successful query with no rows returned
-      if (!res.data || !res.data.userResult || res.data.userResult.values.length === 0) {
-        setError("Query executed successfully, but returned no results.");
-        setResult(null);
-      } else {
-        setResult({ userResult: res.data.userResult });
+     const res = await runAuthenticatedQuery(false);
+      if (res) {
+        if (!res.data || !res.data.userResult || res.data.userResult.values.length === 0) {
+          setError("Query executed successfully, but returned no results.");
+          setResult(null);
+        } else {
+          setResult({ userResult: res.data.userResult });
+        }
       }
-
     } catch (err) {
-      // EDGE CASE: Better error message handling
       const rawError = err.response?.data?.error || "An error occurred.";
       if (rawError.includes("syntax error")) {
         setError("Syntax Error: Please check your SQL syntax.");
@@ -67,19 +76,16 @@ const Playground = ({ questionId, totalQuestions, onSubmission, onReset }) => {
   const handleSubmit = async () => {
     setResult(null);
     setError("");
-
-    // EDGE CASE: Validate query before sending
     if (!validateQuery()) return;
 
     setSubmitLoading(true);
+    
     try {
-      const res = await axios.post("http://localhost:8081/api/run", {
-        questionId,
-        userQuery: query,
-      });
-      onSubmission(res.data);
+     const res = await runAuthenticatedQuery(true);
+      if (res) {
+        onSubmission(res.data);
+      }
     } catch (err) {
-      // EDGE CASE: Better error message handling
       const rawError = err.response?.data?.error || "An error occurred.";
       if (rawError.includes("syntax error")) {
         setError("Syntax Error: Please check your SQL syntax.");
@@ -95,23 +101,21 @@ const Playground = ({ questionId, totalQuestions, onSubmission, onReset }) => {
     setQuery("-- Write your SQL query here");
     setResult(null);
     setError("");
-    if (onReset) {
-      onReset();
-    }
+    if (onReset) onReset();
   };
 
   return (
     <div className="flex flex-col h-full p-6 md:p-8 bg-gray-50 shadow-xl border border-gray-200">
       <h2 className="text-2xl font-bold text-gray-900 mb-4">SQL Playground</h2>
-      
+
       <div className="flex-shrink-0 mb-4">
         <CodeMirror
           value={query}
           height="300px"
-          extensions={[sql()]}
+          extensions={[sql(), EditorView.lineWrapping]} // ✅ Word wrap enabled
           onChange={(value) => setQuery(value)}
           theme="light"
-          className=" border border-gray-300 shadow-sm"
+          className="border border-gray-300 shadow-sm rounded"
         />
       </div>
 
@@ -149,7 +153,7 @@ const Playground = ({ questionId, totalQuestions, onSubmission, onReset }) => {
         )}
         {result?.userResult && (
           <div className="overflow-auto max-h-[300px] mt-2">
-             <h3 className="font-semibold mb-2 text-gray-700">Your Output:</h3>
+            <h3 className="font-semibold mb-2 text-gray-700">Your Output:</h3>
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-200 sticky top-0 z-10">
                 <tr>
@@ -165,16 +169,13 @@ const Playground = ({ questionId, totalQuestions, onSubmission, onReset }) => {
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {result.userResult.values.map((row, i) => (
-                  <tr
-                    key={i}
-                    className={i % 2 === 0 ? "bg-white" : "bg-gray-50"}
-                  >
+                  <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-gray-50"}>
                     {row.map((cell, j) => (
                       <td
                         key={j}
                         className="px-4 py-2 text-sm text-gray-900 break-words max-w-[200px]"
                       >
-                        {cell}
+                        {String(cell)}
                       </td>
                     ))}
                   </tr>
