@@ -1,10 +1,10 @@
 import QuestionPanel from "./QuestionPanel";
 import Solution from "./Solution";
-import Submission from "./Submission"; // Yahan Submission component ka istemal hoga
+import Submission from "./Submission"; 
 
 const tabs = ["Question", "Solution", "Discussion", "Submissions"];
 
-// Parent se activeTab, setActiveTab, aur submissionData props receive karein
+
 export default function QuestionTabs({ question, submissionData, activeTab, setActiveTab }) {
   // Is component ki apni state ('useState') hata di gayi hai
 
