@@ -34,10 +34,10 @@ const Layout = () => {
           };
 
           // 5. Make authenticated API calls
-          const questionRes = await axios.get(`http://localhost:8081/api/question/${id}`, config);
+          const questionRes = await axios.get(`https://datalemur-phgy.vercel.app/api/question/${id}`, config);
           setQuestion(questionRes.data);
 
-          const allQuestionsRes = await axios.get(`http://localhost:8081/api/questions`, config);
+          const allQuestionsRes = await axios.get(`https://datalemur-phgy.vercel.app/api/questions`, config);
           setTotalQuestions(allQuestionsRes.data.length);
 
         } catch (err) {

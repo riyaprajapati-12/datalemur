@@ -19,7 +19,7 @@ const QuestionList = () => {
         setDisplayName(user.displayName || "User"); // 👈 Set the user's name here
         try {
           const token = await user.getIdToken();
-          const res = await axios.get("http://localhost:8081/api/questions", {
+          const res = await axios.get("https://datalemur-phgy.vercel.app/api/questions", {
             headers: {
               Authorization: `Bearer ${token}`,
             },

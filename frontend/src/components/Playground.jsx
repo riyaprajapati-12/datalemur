@@ -35,7 +35,7 @@ const runAuthenticatedQuery = async (isSubmitting = false) => {
   const token = await user.getIdToken();
 
   return axios.post(
-    "http://localhost:8081/api/run",
+    "https://datalemur-phgy.vercel.app/api/run",
     // Yahaan "isSubmitting" flag ko body mein add karein
     { questionId, userQuery: query, isSubmitting },
     { headers: { Authorization: `Bearer ${token}` } }

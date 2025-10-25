@@ -43,7 +43,7 @@ const AuthPage = () => {
 
       // Step 3: Send the token and data to your backend.
       await axios.post(
-        "http://localhost:8081/api/profile",
+        "https://datalemur-phgy.vercel.app/api/profile",
         {
           displayName: user.displayName,
           provider: user.providerData[0].providerId,
