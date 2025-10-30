@@ -14,10 +14,10 @@ const serviceAccountKeyString = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
 
 if (!serviceAccountKeyString) {
   console.error('ERROR: FIREBASE_SERVICE_ACCOUNT_KEY environment variable not set.');
-  // आप यहां app को crash होने से रोकने के लिए कुछ और लॉजिक भी डाल सकते हैं
+  
 }
 
-// 2. JSON string को JavaScript Object में parse करें
+
 let serviceAccount;
 try {
     serviceAccount = JSON.parse(serviceAccountKeyString);
@@ -30,8 +30,7 @@ try {
 // Firebase Admin SDK init
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
-  // अगर आप Realtime Database का उपयोग कर रहे हैं, तो databaseURL भी जोड़ें
-  // databaseURL: "https://YOUR-PROJECT-ID.firebaseio.com" 
+ 
 });
 
 // --- बदलाव यहाँ खत्म ---
@@ -40,9 +39,9 @@ const app = express();
 
 app.use(bodyParser.json());
 app.use(cors({
-  origin: 'https://datalemur-i9y5.vercel.app', // अपना Vercel URL यहाँ डालें
+  origin: 'https://datalemur-i9y5.vercel.app', 
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  credentials: true // यदि आप Cookies या Authorization Headers भेज रहे हैं
+  credentials: true 
 }));
 
 
@@ -50,5 +49,4 @@ app.use(cors({
 app.use("/api", questionRoutes);
 app.use("/api", userRoutes);
 
-// Vercel deployment के लिए module.exports जरूरी है
 module.exports = app;
