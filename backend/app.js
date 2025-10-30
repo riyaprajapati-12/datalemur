@@ -39,7 +39,7 @@ const app = express();
 
 app.use(bodyParser.json());
 app.use(cors({
-  origin: 'https://datalemur-i9y5.vercel.app', 
+  origin: 'https://datalemur.vercel.app', 
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true 
 }));
