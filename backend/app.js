@@ -44,6 +44,10 @@ app.use(cors({
   credentials: true 
 }));
 
+app.get("/api/test", (req, res) => {
+  res.json({ message: "Backend is working fine ✅" });
+});
+
 
 // Routes
 app.use("/api", questionRoutes);
