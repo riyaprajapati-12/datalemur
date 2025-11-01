@@ -1,62 +1,45 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   auth,
   googleProvider,
   githubProvider,
-  signInWithRedirect,
-  getRedirectResult
+  signInWithPopup
 } from "../firebase";
 import axios from "axios";
 
 const AuthPage = () => {
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-
-  useEffect(() => {
-    const handleRedirect = async () => {
-      try {
-        const result = await getRedirectResult(auth);
-        setLoading(false);
-
-        if (result && result.user) {
-          const user = result.user;
-          const token = await user.getIdToken();
-
-          await axios.post(
-            "https://datalemur-1.onrender.com/api/user",
-            {
-              displayName: user.displayName,
-              email: user.email,
-            },
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            }
-          );
-
-          navigate("/home");
-        }
-      } catch (err) {
-        console.error("Redirect error:", err);
-        setError(err.message);
-        setLoading(false);
-      }
-    };
-
-    handleRedirect();
-  }, [navigate]);
 
   const handleProviderSignIn = async (provider) => {
     try {
       setError("");
       setLoading(true);
-      await signInWithRedirect(auth, provider);
+
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+      const token = await user.getIdToken();
+
+      await axios.post(
+        "https://datalemur-1.onrender.com/api/user",
+        {
+          displayName: user.displayName,
+          email: user.email,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      navigate("/home");
     } catch (err) {
-      console.error("Redirect start error:", err);
+      console.error("Popup error:", err);
       setError(err.message);
+    } finally {
       setLoading(false);
     }
   };
@@ -67,7 +50,7 @@ const AuthPage = () => {
         <h2 className="text-2xl font-bold text-center">Sign In / Join</h2>
 
         {loading ? (
-          <p className="text-center text-gray-500">Checking login...</p>
+          <p className="text-center text-gray-500">Loading...</p>
         ) : (
           <>
             <button
