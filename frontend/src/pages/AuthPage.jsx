@@ -23,7 +23,7 @@ const AuthPage = () => {
       const token = await user.getIdToken();
 
       await axios.post(
-        "https://datalemur-1.onrender.com/api/user",
+        "https://datalemur-1.onrender.com/api/profile",
         {
           displayName: user.displayName,
           email: user.email,
