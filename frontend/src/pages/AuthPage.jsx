@@ -50,7 +50,7 @@ const AuthPage = () => {
           console.log("Token acquired. Sending request to backend...");
 
           await axios.post(
-            "https://datalemur-phgy.vercel.app/api/profile",
+            "https://datalemur-1.onrender.com/api/profile",
             {
               displayName: user.displayName,
               provider: user.providerData[0].providerId,
