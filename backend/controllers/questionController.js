@@ -51,7 +51,7 @@ const runQuery = async (req, res) => {
       .status(400)
       .json({ error: "questionId and userQuery are required" });
   }
-
+ console.log(userQuery);
   // 3. Di gayi ID se question dhoondhein
   const q = questions.find((q) => q.id == questionId);
   if (!q) {
@@ -117,6 +117,8 @@ const runQuery = async (req, res) => {
       columns: expRes.fields.map((f) => f.name),
       values: expRes.rows.map((r) => Object.values(r)),
     };
+
+    console.log(expRes);
 
     // 10. Dono results ko compare karein
     const isCorrect = compareResults(
