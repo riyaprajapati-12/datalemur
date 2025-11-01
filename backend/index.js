@@ -50,12 +50,12 @@ app.use("/api", userRoutes);
 module.exports = app;
 
 // --- Local Development (only run locally) ---
-if (process.env.NODE_ENV !== "production") {
-  const PORT = 8081;
-  app.listen(PORT, () => {
-    console.log(`Backend running on http://localhost:${PORT}`);
-  });
-}
+const PORT = process.env.PORT || 8081;
+
+app.listen(PORT, () => {
+  console.log(`✅ Backend running on port ${PORT}`);
+});
+
 
 
 
