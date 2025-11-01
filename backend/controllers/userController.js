@@ -15,7 +15,7 @@ exports.createNewUser = async (req, res) => {
       // save 'null' to the database instead. This prevents the crash.
       email: email || null,
       displayName,
-      provider,
+      provider:  provider || "unknown",
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
     };
 
