@@ -25,12 +25,12 @@ const Layout = () => {
 
         // ✅ Localhost API (no authentication)
         const questionRes = await axios.get(
-          `http://localhost:8081/api/question/${id}`
+          `https://datalemur-n7fo.vercel.app/api/question/${id}`
         );
         setQuestion(questionRes.data);
 
         const allQuestionsRes = await axios.get(
-          `http://localhost:8081/api/questions`
+          `https://datalemur-n7fo.vercel.app/api/questions`
         );
         setTotalQuestions(allQuestionsRes.data.length);
       } catch (err) {
