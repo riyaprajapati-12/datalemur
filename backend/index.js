@@ -3,59 +3,39 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const cors = require("cors");
-const admin = require("firebase-admin");
 const questionRoutes = require("./routes/questionRoutes");
-const userRoutes = require("./routes/userRoutes");
 
-// --- Firebase Service Account Setup ---
-const serviceAccountKeyString = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
+// ✅ Firebase Removed → userRoutes bhi hata diya
+// const userRoutes = require("./routes/userRoutes");
 
-if (!serviceAccountKeyString) {
-  console.error("ERROR: FIREBASE_SERVICE_ACCOUNT_KEY environment variable not set.");
-}
-
-let serviceAccount;
-try {
-  serviceAccount = JSON.parse(serviceAccountKeyString);
-} catch (e) {
-  console.error("ERROR: Failed to parse service account JSON:", e);
-}
-
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount),
-});
-
-// --- Express App Setup ---
+// ✅ Express App Setup
 const app = express();
 
 app.use(bodyParser.json());
 app.use(
   cors({
-    origin: "https://datalemur.vercel.app", // your frontend
+    origin: "http://localhost:5173", 
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
   })
 );
 
-// --- Test Route ---
+// ✅ Test Route
 app.get("/api/test", (req, res) => {
   res.json({ message: "Backend is working fine ✅" });
 });
 
-// --- API Routes ---
+// ✅ API Routes
 app.use("/api", questionRoutes);
-app.use("/api", userRoutes);
 
-// --- Export for Vercel ---
+// ✅ Removed userRoutes because Firebase hata diya hai
+// app.use("/api", userRoutes);
+
+// ✅ Export for Vercel
 module.exports = app;
 
-// --- Local Development (only run locally) ---
+// ✅ Local Development Server
 const PORT = process.env.PORT || 8081;
-
 app.listen(PORT, () => {
   console.log(`✅ Backend running on port ${PORT}`);
 });
-
-
-
-

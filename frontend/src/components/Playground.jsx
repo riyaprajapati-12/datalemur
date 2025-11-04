@@ -1,10 +1,9 @@
 import { useState } from "react";
 import CodeMirror from "@uiw/react-codemirror";
 import { sql } from "@codemirror/lang-sql";
-import { EditorView } from "@codemirror/view"; // ✅ Import this for word wrap
+import { EditorView } from "@codemirror/view";
 import axios from "axios";
 import { FaPlay, FaSyncAlt, FaCheck } from "react-icons/fa";
-import { auth } from "../firebase";
 
 const Playground = ({ questionId, onSubmission, onReset }) => {
   const [query, setQuery] = useState("-- Write your SQL query here");
@@ -25,22 +24,13 @@ const Playground = ({ questionId, onSubmission, onReset }) => {
     return true;
   };
 
- // Is function ko ek "isSubmitting" flag lene ke liye modify karein
-const runAuthenticatedQuery = async (isSubmitting = false) => {
-  const user = auth.currentUser;
-  if (!user) {
-    setError("You are not signed in. Please log in again.");
-    return null;
-  }
-  const token = await user.getIdToken();
-
-  return axios.post(
-    "https://datalemur-phgy.vercel.app/api/run",
-    // Yahaan "isSubmitting" flag ko body mein add karein
-    { questionId, userQuery: query, isSubmitting },
-    { headers: { Authorization: `Bearer ${token}` } }
-  );
-};
+  // ✅ Updated → Localhost backend (8081)
+  const runQueryAPI = async (isSubmitting = false) => {
+    return axios.post(
+      "http://localhost:8081/api/run",
+      { questionId, userQuery: query, isSubmitting }
+    );
+  };
 
   const handleRun = async () => {
     setResult(null);
@@ -49,7 +39,7 @@ const runAuthenticatedQuery = async (isSubmitting = false) => {
 
     setLoading(true);
     try {
-     const res = await runAuthenticatedQuery(false);
+      const res = await runQueryAPI(false);
       if (res) {
         if (!res.data || !res.data.userResult || res.data.userResult.values.length === 0) {
           setError("Query executed successfully, but returned no results.");
@@ -79,9 +69,9 @@ const runAuthenticatedQuery = async (isSubmitting = false) => {
     if (!validateQuery()) return;
 
     setSubmitLoading(true);
-    
+
     try {
-     const res = await runAuthenticatedQuery(true);
+      const res = await runQueryAPI(true);
       if (res) {
         onSubmission(res.data);
       }
@@ -112,7 +102,7 @@ const runAuthenticatedQuery = async (isSubmitting = false) => {
         <CodeMirror
           value={query}
           height="300px"
-          extensions={[sql(), EditorView.lineWrapping]} // ✅ Word wrap enabled
+          extensions={[sql(), EditorView.lineWrapping]}
           onChange={(value) => setQuery(value)}
           theme="light"
           className="border border-gray-300 shadow-sm rounded"
@@ -126,6 +116,7 @@ const runAuthenticatedQuery = async (isSubmitting = false) => {
         >
           <FaSyncAlt /> Reset
         </button>
+
         <button
           onClick={handleRun}
           disabled={loading || submitLoading}
@@ -133,6 +124,7 @@ const runAuthenticatedQuery = async (isSubmitting = false) => {
         >
           <FaPlay /> Run
         </button>
+
         <button
           onClick={handleSubmit}
           disabled={loading || submitLoading}
@@ -146,11 +138,13 @@ const runAuthenticatedQuery = async (isSubmitting = false) => {
         {(loading || submitLoading) && (
           <p className="text-gray-500 animate-pulse">Running query...</p>
         )}
+
         {error && (
           <div className="text-red-700 font-semibold p-2 bg-red-100 rounded">
             {error}
           </div>
         )}
+
         {result?.userResult && (
           <div className="overflow-auto max-h-[300px] mt-2">
             <h3 className="font-semibold mb-2 text-gray-700">Your Output:</h3>
@@ -184,6 +178,7 @@ const runAuthenticatedQuery = async (isSubmitting = false) => {
             </table>
           </div>
         )}
+
         {!loading && !submitLoading && !error && !result && (
           <p className="text-gray-500 italic">
             Your query results will appear here after clicking 'Run'.

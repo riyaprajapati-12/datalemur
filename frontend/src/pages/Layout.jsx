@@ -6,8 +6,6 @@ import Playground from "../components/Playground";
 import QuestionTabs from "../components/QuestionTabs";
 import Stopwatch from "../components/Stopwatch";
 import { FaDatabase, FaChevronLeft, FaChevronRight } from "react-icons/fa";
-import { auth } from "../firebase"; // 👈 1. Import auth
-import { onAuthStateChanged } from "firebase/auth"; // 👈 2. Import onAuthStateChanged
 
 const Layout = () => {
   const { id } = useParams();
@@ -19,46 +17,32 @@ const Layout = () => {
   const [activeTab, setActiveTab] = useState("Question");
 
   useEffect(() => {
-    setLoading(true);
-    setActiveTab("Question");
-    setSubmissionData(null);
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        setActiveTab("Question");
+        setSubmissionData(null);
 
-    // 3. Listen for authentication state
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        // 4. If user is logged in, fetch data
-        try {
-          const token = await user.getIdToken();
-          const config = {
-            headers: { Authorization: `Bearer ${token}` }
-          };
+        // ✅ Localhost API (no authentication)
+        const questionRes = await axios.get(
+          `http://localhost:8081/api/question/${id}`
+        );
+        setQuestion(questionRes.data);
 
-          // 5. Make authenticated API calls
-          const questionRes = await axios.get(`https://datalemur-1.onrender.com/api/question/${id}`, config);
-          setQuestion(questionRes.data);
-
-          const allQuestionsRes = await axios.get(`https://datalemur-1.onrender.com/api/questions`, config);
-          setTotalQuestions(allQuestionsRes.data.length);
-
-        } catch (err) {
-          console.error("Error fetching question data:", err);
-          setQuestion(null);
-          if (err.response && (err.response.status === 401 || err.response.status === 403)) {
-            navigate("/login");
-          }
-        } finally {
-          setLoading(false);
-        }
-      } else {
-        // 6. If no user, redirect to login
-        console.log("No user found, redirecting to login.");
-        navigate("/login");
+        const allQuestionsRes = await axios.get(
+          `http://localhost:8081/api/questions`
+        );
+        setTotalQuestions(allQuestionsRes.data.length);
+      } catch (err) {
+        console.error("Error fetching question data:", err);
+        setQuestion(null);
+      } finally {
+        setLoading(false);
       }
-    });
+    };
 
-    // Cleanup listener
-    return () => unsubscribe();
-  }, [id, navigate]);
+    fetchData();
+  }, [id]);
 
   useEffect(() => {
     if (submissionData?.isCorrect) {
@@ -67,7 +51,6 @@ const Layout = () => {
       }, 2000);
       return () => clearTimeout(timer);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [submissionData]);
 
   const handleSubmission = (data) => {
@@ -79,14 +62,12 @@ const Layout = () => {
     setActiveTab("Question");
     setSubmissionData(null);
   };
-  
+
   const handleNextQuestion = () => {
     if (totalQuestions === 0) return;
     let currentId = parseInt(id);
     let nextId = currentId + 1;
-    if (nextId > totalQuestions) {
-      nextId = 1;
-    }
+    if (nextId > totalQuestions) nextId = 1;
     navigate(`/layout/${nextId}`);
   };
 
@@ -94,9 +75,7 @@ const Layout = () => {
     if (totalQuestions === 0) return;
     let currentId = parseInt(id);
     let prevId = currentId - 1;
-    if (prevId < 1) {
-      prevId = totalQuestions;
-    }
+    if (prevId < 1) prevId = totalQuestions;
     navigate(`/layout/${prevId}`);
   };
 
@@ -125,24 +104,24 @@ const Layout = () => {
           </div>
           <span className="text-xl font-bold tracking-tight">SQL-Practice</span>
         </Link>
-        
+
         <Stopwatch />
-        
+
         <div className="flex items-center gap-4 mr-2">
-            <button 
-                onClick={handlePreviousQuestion} 
-                className="p-3 rounded-full hover:bg-gray-200 transition" 
-                title="Previous Question"
-            >
-                <FaChevronLeft className="text-gray-600" />
-            </button>
-            <button 
-                onClick={handleNextQuestion} 
-                className="p-3 rounded-full hover:bg-gray-200 transition" 
-                title="Next Question"
-            >
-                <FaChevronRight className="text-gray-600" />
-            </button>
+          <button
+            onClick={handlePreviousQuestion}
+            className="p-3 rounded-full hover:bg-gray-200 transition"
+            title="Previous Question"
+          >
+            <FaChevronLeft className="text-gray-600" />
+          </button>
+          <button
+            onClick={handleNextQuestion}
+            className="p-3 rounded-full hover:bg-gray-200 transition"
+            title="Next Question"
+          >
+            <FaChevronRight className="text-gray-600" />
+          </button>
         </div>
       </header>
 
@@ -155,6 +134,7 @@ const Layout = () => {
             setActiveTab={setActiveTab}
           />
         </div>
+
         <div className="w-full md:w-1/2 h-full overflow-y-auto">
           <Playground
             questionId={id}
