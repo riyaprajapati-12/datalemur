@@ -27,7 +27,7 @@ const Playground = ({ questionId, onSubmission, onReset }) => {
   // ✅ Updated → Localhost backend (8081)
   const runQueryAPI = async (isSubmitting = false) => {
     return axios.post(
-      "https://datalemur-n7fo.vercel.app/api/run",
+      "https://datalemur-2.onrender.com/api/run",
       { questionId, userQuery: query, isSubmitting }
     );
   };
