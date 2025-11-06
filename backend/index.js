@@ -14,7 +14,7 @@ const app = express();
 app.use(bodyParser.json());
 app.use(
   cors({
-    origin: "https://datalemur.vercel.app", 
+    origin: "https://datalemur-3.onrender.com", 
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
   })
