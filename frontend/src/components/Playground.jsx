@@ -7,7 +7,7 @@ import { FaPlay, FaSyncAlt, FaCheck } from "react-icons/fa";
 
 // 💡 NEW IMPORTS for Client-Side DB Execution
 import { PGlite } from "@electric-sql/pglite";
-import { compareResults } from "../utils/compareResults"
+import compareResults from "../utils/compareResults"
 
 // Global PGlite instance for the current question's session
 let db = null;

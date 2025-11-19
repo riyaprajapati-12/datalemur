@@ -15,4 +15,5 @@ function compareResults(userResult, expectedResult, rowOrder, colOrder) {
   return JSON.stringify(u) === JSON.stringify(e); //stringfiy kyunki array ko directky sort nhi kr skte
 }
 
-module.exports = compareResults;
+export default compareResults;
+
