@@ -61,7 +61,7 @@ const Playground = ({ questionId, onSubmission, onReset }) => {
   const fetchQuestionSetup = async () => {
     // Backend still uses userQuery to run security checks against forbidden keywords
     return axios.post(
-      "https://datalemur-2.onrender.com/api/run",
+      "https://datalemur-1.onrender.com/api/run",
       { questionId, userQuery: query }
     );
   };

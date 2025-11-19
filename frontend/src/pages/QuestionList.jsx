@@ -13,7 +13,7 @@ const QuestionList = () => {
   useEffect(() => {
     const fetchQuestions = async () => {
       try {
-        const res = await axios.get("https://datalemur-2.onrender.com/api/questions");
+        const res = await axios.get("https://datalemur-1.onrender.com/api/questions");
         setQuestions(res.data);
       } catch (err) {
         console.error("Error fetching questions:", err);

@@ -25,12 +25,12 @@ const Layout = () => {
 
         // ✅ Localhost API (no authentication)
         const questionRes = await axios.get(
-          `https://datalemur-2.onrender.com/api/question/${id}`
+          `https://datalemur-1.onrender.com/api/question/${id}`
         );
         setQuestion(questionRes.data);
 
         const allQuestionsRes = await axios.get(
-          `https://datalemur-2.onrender.com/api/questions`
+          `https://datalemur-1.onrender.com/api/questions`
         );
         setTotalQuestions(allQuestionsRes.data.length);
       } catch (err) {
