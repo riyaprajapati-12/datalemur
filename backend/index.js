@@ -5,8 +5,7 @@ const bodyParser = require("body-parser");
 const cors = require("cors");
 const questionRoutes = require("./routes/questionRoutes");
 
-// ✅ Firebase Removed → userRoutes bhi hata diya
-// const userRoutes = require("./routes/userRoutes");
+
 
 // ✅ Express App Setup
 const app = express();
@@ -28,8 +27,7 @@ app.get("/api/test", (req, res) => {
 // ✅ API Routes
 app.use("/api", questionRoutes);
 
-// ✅ Removed userRoutes because Firebase hata diya hai
-// app.use("/api", userRoutes);
+
 
 // ✅ Export for Vercel
 module.exports = app;

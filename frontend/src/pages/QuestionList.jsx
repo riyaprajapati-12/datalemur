@@ -6,7 +6,7 @@ import { FaSearch } from "react-icons/fa";
 const QuestionList = () => {
   const [questions, setQuestions] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
-  0;
+  
   const [difficultyFilter, setDifficultyFilter] = useState("All");
   const [loading, setLoading] = useState(true);
 

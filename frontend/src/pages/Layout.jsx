@@ -95,7 +95,7 @@ const Layout = () => {
     <div className="flex flex-col h-screen bg-gray-50">
       <header className="flex items-center justify-between p-2 bg-white border-b shadow-sm flex-shrink-0">
         <Link
-          to="/home"
+          to="/"
           className="flex items-center gap-2 text-gray-800 hover:text-indigo-600 transition-colors duration-200 ml-2 group"
           title="Back to Question List"
         >

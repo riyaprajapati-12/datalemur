@@ -4,11 +4,11 @@ const {
   getQuestionById,
   runQuery
 } = require("../controllers/questionController");
-const authMiddleware = require("../middleware/authMiddleware");
+
 const router = express.Router();
 
-router.get("/questions",authMiddleware, getAllQuestions);
-router.get("/question/:id",authMiddleware, getQuestionById);
-router.post("/run",authMiddleware, runQuery);
+router.get("/questions", getAllQuestions);
+router.get("/question/:id", getQuestionById);
+router.post("/run", runQuery);
 
 module.exports = router;

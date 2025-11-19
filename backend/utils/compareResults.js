@@ -12,7 +12,7 @@ function compareResults(userResult, expectedResult, rowOrder, colOrder) {
     e = e.map(r => [...r].sort());
   }
 
-  return JSON.stringify(u) === JSON.stringify(e);
+  return JSON.stringify(u) === JSON.stringify(e); //stringfiy kyunki array ko directky sort nhi kr skte
 }
 
 module.exports = compareResults;
