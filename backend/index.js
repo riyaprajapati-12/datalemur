@@ -13,7 +13,7 @@ const app = express();
 app.use(bodyParser.json());
 app.use(
   cors({
-    origin: "https://datalemur-3.onrender.com", 
+    origin: "https://datalemur.onrender.com", 
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
   })
