@@ -1,7 +1,7 @@
 const path = require("path");
 const fs = require("fs");
-const { getDatabase } = require("../config/db");
-const compareResults = require("../utils/compareResults");
+// const { getDatabase } = require("../config/db");
+// const compareResults = require("../utils/compareResults");
 
 let questions;
 try {
@@ -54,6 +54,7 @@ const runQuery = async (req, res) => {
     return res.status(404).json({ error: "Question not found" });
   }
 
+  // --- BEGIN Security/Input Check (KEEP THIS) ---
   const forbiddenKeywords = [
     "DROP",
     "DELETE",
@@ -72,61 +73,23 @@ const runQuery = async (req, res) => {
       error: "Destructive or data-modifying queries are not allowed.",
     });
   }
-
+  // --- END Security/Input Check ---
+  
+  // NOTE: Server no longer runs the query. It just sends the required SQL and configs.
   try {
-    const db = await getDatabase(questionId, q.schema, q.sample_data);
-
-    let safeUserQuery = userQuery.trim();
-
-    if (safeUserQuery.endsWith(";")) {
-      safeUserQuery = safeUserQuery.slice(0, -1);
-    }
-
-    if (!/LIMIT\s+\d+/i.test(safeUserQuery)) {
-      safeUserQuery += " LIMIT 200";
-    }
-    safeUserQuery += ";";
-
-    let userRes;
-    try {
-      userRes = await db.query(safeUserQuery);
-    } catch (err) {
-      console.error("Database Query Error:", err.message);
-      return res
-        .status(400)
-        .json({ error: "Invalid SQL query. Please check your syntax." });
-    }
-
-    const userResult = {
-      columns: userRes.fields?.map((f) => f.name) || [],
-      values: userRes.rows?.map((r) => Object.values(r)) || [],
-    };
-
-    const expRes = await db.query(q.expected_query);
-
-    const expectedResult = {
-      columns: expRes.fields.map((f) => f.name),
-      values: expRes.rows.map((r) => Object.values(r)),
-    };
-
-    const isCorrect = compareResults(
-      userResult,
-      expectedResult,
-      q.row_order_matters,
-      q.column_order_matters
-    );
-
+    // Send the data the frontend needs to run the database instance and queries
     res.json({
-      userResult,
-      expectedResult,
-      isCorrect,
-      feedback: isCorrect
-        ? "Correct!"
-        : userResult.values.length === 0
-        ? "No rows returned, check your query"
-        : "Try again",
+      questionId: q.id,
+      schema: q.schema, // For creating the database tables
+      sampleData: q.sample_data, // For populating the tables
+      expectedQuery: q.expected_query, // The solution query for comparison
+      rowOrderMatters: q.row_order_matters, // Comparison setting
+      columnOrderMatters: q.column_order_matters, // Comparison setting
+      // The userQuery is sent back for convenience, though the client already has it
+      userQuery: userQuery, 
     });
   } catch (err) {
+    // This catch block is mostly for unexpected file/server errors now, not SQL errors
     console.error("Server Error in runQuery:", err);
     res.status(500).json({
       error: "An unexpected server error occurred. Please try again later.",

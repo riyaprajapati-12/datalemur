@@ -5,6 +5,37 @@ import { EditorView } from "@codemirror/view";
 import axios from "axios";
 import { FaPlay, FaSyncAlt, FaCheck } from "react-icons/fa";
 
+// 💡 NEW IMPORTS for Client-Side DB Execution
+import { PGlite } from "@electric-sql/pglite";
+import { compareResults } from "../utils/compareResults"; // Assuming you placed this file in src/utils
+
+// Global PGlite instance for the current question's session
+let db = null;
+let currentQuestionId = null;
+
+// Utility function to initialize the PGlite database
+const initializeDB = async (questionId, schema, sampleData) => {
+    // Only initialize if it's a new question or the instance is null
+    if (db === null || currentQuestionId !== questionId) {
+        db = new PGlite();
+        currentQuestionId = questionId;
+
+        // Run schema statements
+        const schemaStatements = schema.split(";").filter(s => s.trim());
+        for (const stmt of schemaStatements) {
+            await db.query(stmt);
+        }
+
+        // Run sample data statements
+        const sampleStatements = sampleData.split(";").filter(s => s.trim());
+        for (const stmt of sampleStatements) {
+            await db.query(stmt);
+        }
+    }
+    return db;
+};
+
+
 const Playground = ({ questionId, onSubmission, onReset }) => {
   const [query, setQuery] = useState("-- Write your SQL query here");
   const [result, setResult] = useState(null);
@@ -17,73 +48,143 @@ const Playground = ({ questionId, onSubmission, onReset }) => {
       setError("Query cannot be empty. Please write a query to proceed.");
       return false;
     }
-    if (!query.trim().endsWith(";")) {
-      setError("Syntax Error: Your SQL query must end with a semicolon (;).");
-      return false;
-    }
+    // We remove the mandatory semicolon validation here, as PGlite handles queries without one,
+    // and we add it back later for consistency.
+    // if (!query.trim().endsWith(";")) {
+    //   setError("Syntax Error: Your SQL query must end with a semicolon (;).");
+    //   return false;
+    // }
     return true;
   };
 
-  // ✅ Updated → Localhost backend (8081)
-  const runQueryAPI = async (isSubmitting = false) => {
+  // ✅ New Fetcher: Only fetches setup data (schema, expected query) from the backend
+  const fetchQuestionSetup = async () => {
+    // Backend still uses userQuery to run security checks against forbidden keywords
     return axios.post(
       "https://datalemur-2.onrender.com/api/run",
-      { questionId, userQuery: query, isSubmitting }
+      { questionId, userQuery: query }
     );
   };
 
+  // 🚀 New Core Function: Executes SQL client-side using PGlite
+  const executeClientQuery = async (isSubmitting = false) => {
+    setLoading(true); // Manage loading state here
+    setSubmitLoading(isSubmitting);
+    
+    try {
+      // 1. Fetch Question Setup (Schema, Expected Query, Comparison Flags)
+      const setupRes = await fetchQuestionSetup();
+      const setupData = setupRes.data;
+
+      // 2. Initialize PGlite (This ensures schema/data is loaded once)
+      const dbInstance = await initializeDB(
+        questionId,
+        setupData.schema,
+        setupData.sampleData
+      );
+
+      // --- Query Preparation (Adding LIMIT for safety on RUN) ---
+      let safeUserQuery = query.trim();
+      if (safeUserQuery.endsWith(";")) {
+        safeUserQuery = safeUserQuery.slice(0, -1);
+      }
+      if (!isSubmitting && !/LIMIT\s+\d+/i.test(safeUserQuery)) {
+        safeUserQuery += " LIMIT 200";
+      }
+      safeUserQuery += ";";
+      // --- End Preparation ---
+
+      // 3. Execute User Query
+      let userRes = await dbInstance.query(safeUserQuery);
+
+      const userResult = {
+        columns: userRes.fields?.map((f) => f.name) || [],
+        values: userRes.rows?.map((r) => Object.values(r)) || [],
+      };
+
+      // 4. If Submitting, Execute Expected Query and Compare
+      if (isSubmitting) {
+        const expRes = await dbInstance.query(setupData.expectedQuery);
+
+        const expectedResult = {
+          columns: expRes.fields.map((f) => f.name),
+          values: expRes.rows.map((r) => Object.values(r)),
+        };
+
+        const isCorrect = compareResults(
+          userResult,
+          expectedResult,
+          setupData.rowOrderMatters,
+          setupData.columnOrderMatters
+        );
+
+        // Return full submission data for onSubmission
+        return {
+          userResult,
+          expectedResult,
+          isCorrect,
+          feedback: isCorrect ? "Correct!" : "Try again",
+        };
+      } else {
+        // Return only userResult for "Run"
+        return { userResult };
+      }
+
+    } catch (err) {
+      // Handle errors from fetchQuestionSetup (security error) or dbInstance.query (SQL error)
+      console.error("Client-side Execution Error:", err.message, err.response?.data?.error);
+      
+      let errorMessage = "An unknown error occurred.";
+      if (err.response?.data?.error) {
+          // Error from the backend (e.g., forbidden keyword check)
+          errorMessage = err.response.data.error;
+      } else if (err.message) {
+          // Error from PGlite (SQL syntax, table not found, etc.)
+          errorMessage = `SQL Error: ${err.message}`;
+          if (err.message.includes("does not exist")) {
+              errorMessage = "Error: A table or column in your query does not exist.";
+          }
+      }
+      throw new Error(errorMessage);
+    } finally {
+        setLoading(false);
+        setSubmitLoading(false);
+    }
+  };
+  
+  // Update handleRun to use the client-side execution
   const handleRun = async () => {
     setResult(null);
     setError("");
     if (!validateQuery()) return;
 
-    setLoading(true);
     try {
-      const res = await runQueryAPI(false);
-      if (res) {
-        if (!res.data || !res.data.userResult || res.data.userResult.values.length === 0) {
-          setError("Query executed successfully, but returned no results.");
-          setResult(null);
-        } else {
-          setResult({ userResult: res.data.userResult });
-        }
-      }
-    } catch (err) {
-      const rawError = err.response?.data?.error || "An error occurred.";
-      if (rawError.includes("syntax error")) {
-        setError("Syntax Error: Please check your SQL syntax.");
-      } else if (rawError.includes("does not exist")) {
-        setError("Error: A table or column in your query does not exist.");
+      const res = await executeClientQuery(false); // false for Run
+      
+      if (!res.userResult || res.userResult.values.length === 0) {
+        setError("Query executed successfully, but returned no results.");
+        setResult(null);
       } else {
-        setError(rawError);
+        setResult({ userResult: res.userResult });
       }
+      
+    } catch (err) {
+      setError(err.message);
       setResult(null);
-    } finally {
-      setLoading(false);
     }
   };
 
+  // Update handleSubmit to use the client-side execution
   const handleSubmit = async () => {
     setResult(null);
     setError("");
     if (!validateQuery()) return;
 
-    setSubmitLoading(true);
-
     try {
-      const res = await runQueryAPI(true);
-      if (res) {
-        onSubmission(res.data);
-      }
+      const submissionData = await executeClientQuery(true); // true for Submit
+      onSubmission(submissionData);
     } catch (err) {
-      const rawError = err.response?.data?.error || "An error occurred.";
-      if (rawError.includes("syntax error")) {
-        setError("Syntax Error: Please check your SQL syntax.");
-      } else {
-        setError(rawError);
-      }
-    } finally {
-      setSubmitLoading(false);
+      setError(err.message);
     }
   };
 
