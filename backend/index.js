@@ -4,7 +4,7 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const cors = require("cors");
 const questionRoutes = require("./routes/questionRoutes");
-import pool from './db.js';
+import pool from './config/db';
 
 
 // ✅ Express App Setup
