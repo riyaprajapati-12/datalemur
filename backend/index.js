@@ -4,7 +4,7 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const cors = require("cors");
 const questionRoutes = require("./routes/questionRoutes");
-
+import pool from './db.js';
 
 
 // ✅ Express App Setup
@@ -27,7 +27,17 @@ app.get("/api/test", (req, res) => {
 // ✅ API Routes
 app.use("/api", questionRoutes);
 
+async function testDb() {
+  try {
+    const res = await pool.query('SELECT NOW()');
+    console.log('✅ DB connected at', res.rows[0].now);
+  } catch (err) {
+    console.error('❌ DB connection failed:', err.message);
+    process.exit(1); // optional — dev ke liye helpful
+  }
+}
 
+await testDb(); 
 
 // ✅ Export for Vercel
 module.exports = app;
