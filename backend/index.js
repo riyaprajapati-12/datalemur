@@ -27,17 +27,15 @@ app.get("/api/test", (req, res) => {
 // ✅ API Routes
 app.use("/api", questionRoutes);
 
-async function testDb() {
+app.get("/api/db-test", async (req, res) => {
   try {
-    const res = await pool.query('SELECT NOW()');
-    console.log('✅ DB connected at', res.rows[0].now);
+    const result = await pool.query("SELECT NOW()");
+    res.json({ success: true, time: result.rows[0] });
   } catch (err) {
-    console.error('❌ DB connection failed:', err.message);
-    process.exit(1); // optional — dev ke liye helpful
+    console.error(err);
+    res.status(500).json({ success: false, error: err.message });
   }
-}
-
-await testDb(); 
+});
 
 // ✅ Export for Vercel
 module.exports = app;
