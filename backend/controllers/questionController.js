@@ -1,7 +1,6 @@
 const path = require("path");
 const fs = require("fs");
-// const { getDatabase } = require("../config/db");
-// const compareResults = require("../utils/compareResults");
+
 
 let questions;
 try {
