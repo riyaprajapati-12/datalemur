@@ -1,13 +1,17 @@
-const { Pool } = require("pg");
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false },
-});
+const mongoose = require("mongoose");
 
-pool
-  .query("SELECT NOW()")
-  .then((res) => console.log("DB Connected:", res.rows))
-  .catch((err) => console.error("DB Error:", err));
+const connectDB = async () => {
+  try {
+    await mongoose.connect(process.env.MONGO_URI, {
+      dbName: "sql_practice",
+    });
 
-module.exports = pool;
+    console.log("✅ MongoDB Connected");
+  } catch (err) {
+    console.error("❌ MongoDB Error:", err.message);
+    process.exit(1);
+  }
+};
+
+module.exports = connectDB;

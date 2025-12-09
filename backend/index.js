@@ -4,7 +4,11 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const cors = require("cors");
 const questionRoutes = require("./routes/questionRoutes");
-const pool = require("./config/db");
+
+require("dotenv").config();
+const connectDB = require("./config/db");
+const authRoutes = require("./routes/authRoutes");
+const submissionRoutes = require("./routes/submissionRoutes");
 
 
 
@@ -27,22 +31,13 @@ app.get("/api/test", (req, res) => {
 
 // ✅ API Routes
 app.use("/api", questionRoutes);
+app.use("/api/auth", authRoutes);
+app.use("/api/submission", submissionRoutes);
 
-app.get("/api/db-test", async (req, res) => {
-  try {
-    const result = await pool.query("SELECT NOW()");
-    res.json({ success: true, time: result.rows[0] });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
-
-// ✅ Export for Vercel
-module.exports = app;
 
 // ✅ Local Development Server
 const PORT = process.env.PORT || 8081;
 app.listen(PORT, () => {
   console.log(`✅ Backend running on port ${PORT}`);
+  connectDB();
 });
