@@ -12,8 +12,8 @@ function App() {
         <Route path="/" element={<QuestionList />} />
 
        <Route path="/layout/:id" element={<Layout/>}/>
-        <Route path="/login" element={<Login/>}/>
-        <Route path="/signup" element={<Signup/>}/>
+        <Route path="/log" element={<Login/>}/>
+        <Route path="/sign" element={<Signup/>}/>
       </Routes>
     </Router>
   );
