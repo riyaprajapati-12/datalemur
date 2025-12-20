@@ -14,7 +14,7 @@ const Login = () => {
     e.preventDefault();
     const res = await axios.post("https://datalemur-1.onrender.com/api/auth/login", form);
     localStorage.setItem("token", res.data.token);
-    navigate("/layout/1");
+    navigate("/questionList");
   };
 
   return (
