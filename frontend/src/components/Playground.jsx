@@ -4,7 +4,7 @@ import { sql } from "@codemirror/lang-sql";
 import { EditorView } from "@codemirror/view";
 import axios from "axios";
 import { FaPlay, FaSyncAlt, FaCheck } from "react-icons/fa";
-
+import { useNavigate } from "react-router-dom";
 // 💡 NEW IMPORTS for Client-Side DB Execution
 import { PGlite } from "@electric-sql/pglite";
 import compareResults from "../utils/compareResults"
@@ -42,7 +42,7 @@ const Playground = ({ questionId, onSubmission, onReset }) => {
   const [loading, setLoading] = useState(false);
   const [submitLoading, setSubmitLoading] = useState(false);
   const [error, setError] = useState("");
-
+const navigate = useNavigate();
   const validateQuery = () => {
     if (!query.trim()) {
       setError("Query cannot be empty. Please write a query to proceed.");
@@ -151,9 +151,19 @@ const Playground = ({ questionId, onSubmission, onReset }) => {
         setSubmitLoading(false);
     }
   };
+  const checkAuth = () => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      alert("Please login to run or submit your query! 🔐");
+      navigate("/login");
+      return false;
+    }
+    return true;
+  };
   
   // Update handleRun to use the client-side execution
   const handleRun = async () => {
+    if (!checkAuth()) return;
     setResult(null);
     setError("");
     if (!validateQuery()) return;
@@ -176,6 +186,7 @@ const Playground = ({ questionId, onSubmission, onReset }) => {
 
   // Update handleSubmit to use the client-side execution
   const handleSubmit = async () => {
+    if (!checkAuth()) return;
     setResult(null);
     setError("");
     if (!validateQuery()) return;
@@ -209,6 +220,13 @@ const Playground = ({ questionId, onSubmission, onReset }) => {
           className="border border-gray-300 shadow-sm rounded"
         />
       </div>
+      {!localStorage.getItem("token") && (
+      <div className="flex justify-end mb-2">
+        <p className="text-orange-600 text-sm font-medium bg-orange-50 px-3 py-1 rounded-md border border-orange-200">
+          ⚠️ You are in preview mode. Please login to execute or submit queries.
+        </p>
+      </div>
+    )}
 
       <div className="flex justify-end gap-4 mb-4 flex-shrink-0">
         <button
@@ -233,6 +251,7 @@ const Playground = ({ questionId, onSubmission, onReset }) => {
         >
           <FaCheck /> Submit
         </button>
+        
       </div>
 
       <div className="flex-grow overflow-auto p-2 bg-white rounded-lg border border-gray-200 shadow-inner">
