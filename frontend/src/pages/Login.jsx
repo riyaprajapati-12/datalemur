@@ -6,28 +6,74 @@ const Login = () => {
   const [form, setForm] = useState({ email: "", password: "" });
   const navigate = useNavigate();
 
-  const handleChange = e => {
+  const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = async e => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const res = await axios.post("https://datalemur-1.onrender.com/api/auth/login", form);
+    const res = await axios.post(
+      "https://datalemur-1.onrender.com/api/auth/login",
+      form
+    );
     localStorage.setItem("token", res.data.token);
     navigate("/questionList");
   };
 
   return (
-    <div className="flex justify-center items-center h-screen">
-      <form onSubmit={handleSubmit} className="bg-white p-6 rounded shadow w-80">
-        <h2 className="text-xl font-bold mb-4">Login</h2>
-        <input name="email" placeholder="Email" onChange={handleChange} className="w-full border p-2 mb-2" />
-        <input name="password" type="password" placeholder="Password" onChange={handleChange} className="w-full border p-2 mb-2" />
-        <button className="bg-green-600 text-white w-full py-2">Login</button>
-        <p className="mt-2 text-sm">
-          New user? <Link to="/signup" className="text-blue-600">Signup</Link>
+    <div className="min-h-screen flex items-center justify-center bg-white px-6">
+      <div className="w-full max-w-sm">
+        
+        {/* Brand */}
+        <h1 className="text-4xl font-extrabold text-red-600 text-center mb-2">
+          SQLQuist
+        </h1>
+        <p className="text-center text-gray-600 mb-8">
+          Login to continue your SQL journey
         </p>
-      </form>
+
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <input
+            name="email"
+            type="email"
+            placeholder="Email address"
+            onChange={handleChange}
+            required
+            className="w-full border border-gray-300 px-4 py-3 rounded-lg
+            focus:outline-none focus:ring-2 focus:ring-red-500"
+          />
+
+          <input
+            name="password"
+            type="password"
+            placeholder="Password"
+            onChange={handleChange}
+            required
+            className="w-full border border-gray-300 px-4 py-3 rounded-lg
+            focus:outline-none focus:ring-2 focus:ring-red-500"
+          />
+
+          <button
+            type="submit"
+            className="w-full py-3 rounded-full font-semibold text-white
+            bg-red-600 hover:bg-red-700 transition transform hover:scale-105"
+          >
+            Login
+          </button>
+        </form>
+
+        {/* Footer */}
+        <p className="mt-6 text-center text-sm text-gray-600">
+          New to SQLQuist?{" "}
+          <Link
+            to="/signup"
+            className="text-red-600 font-semibold hover:underline"
+          >
+            Create an account
+          </Link>
+        </p>
+      </div>
     </div>
   );
 };
