@@ -15,17 +15,10 @@ const Dashboard = () => {
         </p>
 
         <button
-          onClick={() => navigate("/login")}
-          className="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg mb-3 transition"
+          onClick={() => navigate("/questionList")}
+          className="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg transition"
         >
-          Login
-        </button>
-
-        <button
-          onClick={() => navigate("/signup")}
-          className="w-full border border-green-600 text-green-600 hover:bg-green-50 py-2 rounded-lg transition"
-        >
-          Signup
+          Start
         </button>
 
       </div>

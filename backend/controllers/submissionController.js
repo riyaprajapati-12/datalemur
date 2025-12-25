@@ -1,16 +1,21 @@
 const Submission = require("../models/Submission");
 
 const saveSubmission = async (req, res) => {
-  const { userId, questionId, userQuery, isCorrect } = req.body;
+  try {
+    const { questionId, userQuery, isCorrect } = req.body;
 
-  const submission = await Submission.create({
-    userId,
-    questionId,
-    userQuery,
-    isCorrect,
-  });
+    const submission = await Submission.create({
+      userId: req.user.id,   // ✅ token se
+      questionId,
+      userQuery,
+      isCorrect,
+    });
 
-  res.json(submission);
+    res.json(submission);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 };
 
 module.exports = { saveSubmission };
+
