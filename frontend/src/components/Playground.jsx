@@ -225,6 +225,13 @@ const handleSubmit = async () => {
     console.error("Submission Error:", err);
   }
 };
+useEffect(() => {
+    if (initialQuery) {
+      setQuery(initialQuery);
+    } else {
+      setQuery("-- Write your SQL query here");
+    }
+  }, [initialQuery]);
 
   const handleReset = () => {
     setQuery("-- Write your SQL query here");

@@ -1,10 +1,12 @@
 const express = require("express");
-const { saveSubmission } = require("../controllers/submissionController");
-const authMiddleware = require("../middleware/authMiddleware"); // Import karein
+const { saveSubmission, getSubmissions,getLatestSubmission } = require("../controllers/submissionController");
+const authMiddleware = require("../middleware/authMiddleware");
 
 const router = express.Router();
 
-// Middleware add kar diya taki sirf logged in users submit kar sakein
 router.post("/submit", authMiddleware, saveSubmission);
+// Naya route:
+router.get("/:questionId", authMiddleware, getSubmissions);
+router.get("/latest/:questionId", authMiddleware, getLatestSubmission);
 
 module.exports = router;

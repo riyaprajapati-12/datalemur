@@ -15,6 +15,9 @@ const Layout = () => {
   const [loading, setLoading] = useState(true);
   const [submissionData, setSubmissionData] = useState(null);
   const [activeTab, setActiveTab] = useState("Question");
+  
+  // ✅ New state for existing query
+  const [initialQuery, setInitialQuery] = useState("");
 
   useEffect(() => {
     const fetchData = async () => {
@@ -22,8 +25,9 @@ const Layout = () => {
         setLoading(true);
         setActiveTab("Question");
         setSubmissionData(null);
+        setInitialQuery(""); // Reset query for new question
 
-        // ✅ Localhost API (no authentication)
+        // 1. Fetch Question Data
         const questionRes = await axios.get(
           `https://datalemur-1.onrender.com/api/question/${id}`
         );
@@ -33,6 +37,30 @@ const Layout = () => {
           `https://datalemur-1.onrender.com/api/questions`
         );
         setTotalQuestions(allQuestionsRes.data.length);
+
+        // 2. ✅ Fetch Previous Successful Submission
+        const token = localStorage.getItem("token");
+        if (token) {
+          try {
+            const latestRes = await axios.get(
+              `https://datalemur-1.onrender.com/api/submission/latest/${id}`,
+              { headers: { Authorization: `Bearer ${token}` } }
+            );
+
+            if (latestRes.data) {
+              setInitialQuery(latestRes.data.userQuery);
+              // Agar user ne pehle solve kiya hai, toh direct Submission tab dikhayein
+              setActiveTab("Submissions");
+              
+              // Note: Hum sirf query dikha rahe hain, 
+              // Result table dikhane ke liye user ko ek baar 'Run' dabana hoga 
+              // ya aap backend se result bhi bhej sakte hain.
+            }
+          } catch (err) {
+            console.log("No previous submission found or error fetching it.");
+          }
+        }
+
       } catch (err) {
         console.error("Error fetching question data:", err);
         setQuestion(null);
@@ -44,6 +72,7 @@ const Layout = () => {
     fetchData();
   }, [id]);
 
+  // Rest of your functions (handleNext, handlePrevious, etc.) remain same
   useEffect(() => {
     if (submissionData?.isCorrect) {
       const timer = setTimeout(() => {
@@ -61,6 +90,7 @@ const Layout = () => {
   const handleResetView = () => {
     setActiveTab("Question");
     setSubmissionData(null);
+    setInitialQuery("");
   };
 
   const handleNextQuestion = () => {
@@ -79,47 +109,24 @@ const Layout = () => {
     navigate(`/layout/${prevId}`);
   };
 
-  if (loading) {
-    return <div className="text-center py-24 text-gray-500">Loading...</div>;
-  }
-
-  if (!question) {
-    return (
-      <div className="text-center py-24 text-red-500">
-        Question not found.
-      </div>
-    );
-  }
+  if (loading) return <div className="text-center py-24 text-gray-500">Loading...</div>;
+  if (!question) return <div className="text-center py-24 text-red-500">Question not found.</div>;
 
   return (
     <div className="flex flex-col h-screen bg-gray-50">
       <header className="flex items-center justify-between p-2 bg-white border-b shadow-sm flex-shrink-0">
-        <Link
-          to="/questionList"
-          className="flex items-center gap-2 text-gray-800 hover:text-indigo-600 transition-colors duration-200 ml-2 group"
-          title="Back to Question List"
-        >
-          <div className="p-2 bg-indigo-600 rounded-lg group-hover:bg-indigo-700 transition-colors duration-200">
+        <Link to="/questionList" className="flex items-center gap-2 text-gray-800 hover:text-indigo-600 ml-2 group">
+          <div className="p-2 bg-indigo-600 rounded-lg group-hover:bg-indigo-700">
             <FaDatabase className="text-white" size={20} />
           </div>
           <span className="text-xl font-bold tracking-tight">SQL-Practice</span>
         </Link>
-
         <Stopwatch />
-
         <div className="flex items-center gap-4 mr-2">
-          <button
-            onClick={handlePreviousQuestion}
-            className="p-3 rounded-full hover:bg-gray-200 transition"
-            title="Previous Question"
-          >
+          <button onClick={handlePreviousQuestion} className="p-3 rounded-full hover:bg-gray-200">
             <FaChevronLeft className="text-gray-600" />
           </button>
-          <button
-            onClick={handleNextQuestion}
-            className="p-3 rounded-full hover:bg-gray-200 transition"
-            title="Next Question"
-          >
+          <button onClick={handleNextQuestion} className="p-3 rounded-full hover:bg-gray-200">
             <FaChevronRight className="text-gray-600" />
           </button>
         </div>
@@ -141,6 +148,7 @@ const Layout = () => {
             totalQuestions={totalQuestions}
             onSubmission={handleSubmission}
             onReset={handleResetView}
+            initialQuery={initialQuery} // ✅ Passing initialQuery to Playground
           />
         </div>
       </div>
