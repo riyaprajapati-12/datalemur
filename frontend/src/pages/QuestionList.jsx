@@ -6,14 +6,15 @@ import { FaSearch } from "react-icons/fa";
 const QuestionList = () => {
   const [questions, setQuestions] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
-  
   const [difficultyFilter, setDifficultyFilter] = useState("All");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchQuestions = async () => {
       try {
-        const res = await axios.get("https://datalemur-1.onrender.com/api/questions");
+        const res = await axios.get(
+          "https://datalemur-1.onrender.com/api/questions"
+        );
         setQuestions(res.data);
       } catch (err) {
         console.error("Error fetching questions:", err);
@@ -26,10 +27,9 @@ const QuestionList = () => {
   }, []);
 
   const filteredQuestions = questions
-    .filter((q) => {
-      if (difficultyFilter === "All") return true;
-      return q.difficulty === difficultyFilter;
-    })
+    .filter((q) =>
+      difficultyFilter === "All" ? true : q.difficulty === difficultyFilter
+    )
     .filter(
       (q) =>
         q.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -53,34 +53,40 @@ const QuestionList = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <p className="text-gray-500">Loading questions...</p>
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <p className="text-gray-500 text-lg">Loading questions...</p>
       </div>
     );
   }
 
   return (
-    <div className="p-4 sm:p-8 bg-gray-50 min-h-screen">
-      <div className="max-w-5xl mx-auto">
-        <div className="mb-6">
-          <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight">
-            SQL Problem Set
+    <div className="min-h-screen bg-white px-6 py-10">
+      <div className="max-w-6xl mx-auto">
+        
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-4xl font-extrabold text-red-600">
+            SQLQuist Problems
           </h1>
-          <p className="mt-2 text-lg text-gray-600">
-            Sharpen your SQL skills with our curated list of problems.
+          <p className="mt-2 text-gray-600 text-lg">
+            Practice real interview-level SQL questions.
           </p>
+          <div className="w-20 h-1 bg-red-600 mt-4 rounded-full"></div>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-4 mb-6">
-          <div className="flex bg-gray-200 p-1 rounded-lg">
+        {/* Filters */}
+        <div className="flex flex-col md:flex-row gap-4 mb-8">
+          
+          {/* Difficulty Filter */}
+          <div className="flex border border-gray-300 rounded-full overflow-hidden">
             {difficultyLevels.map((level) => (
               <button
                 key={level}
                 onClick={() => setDifficultyFilter(level)}
-                className={`px-4 py-1.5 text-sm font-semibold rounded-md transition-colors duration-200 ${
+                className={`px-5 py-2 text-sm font-semibold transition ${
                   difficultyFilter === level
-                    ? "bg-white text-gray-800 shadow"
-                    : "bg-transparent text-gray-600 hover:bg-white/60"
+                    ? "bg-red-600 text-white"
+                    : "bg-white text-gray-700 hover:bg-red-50"
                 }`}
               >
                 {level}
@@ -88,52 +94,59 @@ const QuestionList = () => {
             ))}
           </div>
 
+          {/* Search */}
           <div className="relative flex-grow">
-            <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-              <FaSearch className="text-gray-400" />
-            </div>
+            <FaSearch className="absolute left-4 top-3.5 text-gray-400" />
             <input
               type="text"
-              placeholder="Search by title or company..."
+              placeholder="Search by title or company"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full p-3 pl-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition shadow-sm"
+              className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-full
+              focus:outline-none focus:ring-2 focus:ring-red-500"
             />
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-md overflow-hidden">
-          <div className="flex bg-gray-100 p-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-            <div className="w-1/12">Status</div>
-            <div className="w-5/12">Title</div>
-            <div className="w-2/12">Difficulty</div>
-            <div className="w-4/12">Company</div>
+        {/* Table */}
+        <div className="border border-gray-200 rounded-xl overflow-hidden">
+          
+          {/* Table Head */}
+          <div className="grid grid-cols-12 bg-red-50 px-6 py-3 text-sm font-semibold text-gray-700">
+            <div className="col-span-5">Title</div>
+            <div className="col-span-3">Difficulty</div>
+            <div className="col-span-4">Company</div>
           </div>
 
-          <div className="flex flex-col">
-            {filteredQuestions.map((q) => (
-              <Link
-                key={q.id}
-                to={`/layout/${q.id}`}
-                className="flex items-center p-4 border-b border-gray-200 hover:bg-gray-50 transition-colors duration-200"
+          {/* Rows */}
+          {filteredQuestions.map((q) => (
+            <Link
+              key={q.id}
+              to={`/layout/${q.id}`}
+              className="grid grid-cols-12 px-6 py-4 border-t
+              hover:bg-red-50 transition"
+            >
+              <div className="col-span-5 font-medium text-gray-800">
+                {q.title}
+              </div>
+              <div
+                className={`col-span-3 font-semibold ${getDifficultyStyle(
+                  q.difficulty
+                )}`}
               >
-                <div className="w-1/12"></div>
-                <div className="w-5/12 text-gray-800 font-semibold">{q.title}</div>
-                <div
-                  className={`w-2/12 font-medium ${getDifficultyStyle(q.difficulty)}`}
-                >
-                  {q.difficulty}
-                </div>
-                <div className="w-4/12 text-gray-500">{q.company_name}</div>
-              </Link>
-            ))}
+                {q.difficulty}
+              </div>
+              <div className="col-span-4 text-gray-600">
+                {q.company_name}
+              </div>
+            </Link>
+          ))}
 
-            {filteredQuestions.length === 0 && !loading && (
-              <p className="text-gray-500 text-center p-8">
-                No questions found matching your criteria.
-              </p>
-            )}
-          </div>
+          {filteredQuestions.length === 0 && (
+            <p className="text-center py-10 text-gray-500">
+              No questions found.
+            </p>
+          )}
         </div>
       </div>
     </div>
