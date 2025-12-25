@@ -36,7 +36,7 @@ const initializeDB = async (questionId, schema, sampleData) => {
 };
 
 
-const Playground = ({ questionId, onSubmission, onReset }) => {
+const Playground = ({ questionId, onSubmission, onReset , initialQuery}) => {
   const [query, setQuery] = useState("-- Write your SQL query here");
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
