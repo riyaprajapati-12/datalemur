@@ -185,19 +185,46 @@ const navigate = useNavigate();
   };
 
   // Update handleSubmit to use the client-side execution
-  const handleSubmit = async () => {
-    if (!checkAuth()) return;
-    setResult(null);
-    setError("");
-    if (!validateQuery()) return;
+  // Playground.jsx ke handleSubmit function ko aise update karein
 
-    try {
-      const submissionData = await executeClientQuery(true); // true for Submit
-      onSubmission(submissionData);
-    } catch (err) {
-      setError(err.message);
+const handleSubmit = async () => {
+  if (!checkAuth()) return;
+  setResult(null);
+  setError("");
+  if (!validateQuery()) return;
+
+  try {
+    // 1. Client-side execution aur comparison
+    const submissionData = await executeClientQuery(true); 
+    
+    // 2. Agar answer sahi hai (isCorrect: true), toh backend par save karein
+    if (submissionData.isCorrect) {
+      const token = localStorage.getItem("token");
+      
+      await axios.post(
+        "https://datalemur-1.onrender.com/api/submission/submit",
+        {
+          questionId: questionId,
+          userQuery: query,
+          isCorrect: true
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}` // Auth middleware ke liye token bhej rahe hain
+          }
+        }
+      );
+      console.log("Submission saved to database successfully! ✅");
     }
-  };
+
+    // 3. UI update karein (Tabs change honge aur results dikhenge)
+    onSubmission(submissionData);
+    
+  } catch (err) {
+    setError(err.message);
+    console.error("Submission Error:", err);
+  }
+};
 
   const handleReset = () => {
     setQuery("-- Write your SQL query here");
