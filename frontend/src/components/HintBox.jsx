@@ -62,8 +62,9 @@ const HintBox = ({ hints = [] }) => {
         {visibleCount < hints.length && (
           <button
             onClick={showNextHint}
-            className="px-4 py-2 bg-blue-500 text-white text-sm font-medium rounded-md
-                       hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-4 py-2 text-sm font-semibold rounded-md
+                       border border-red-600 text-red-600 hover:text-white hover:bg-red-600
+                       transition duration-200"
           >
             Show Next Hint
           </button>
@@ -72,8 +73,9 @@ const HintBox = ({ hints = [] }) => {
         {visibleCount > 0 && (
           <button
             onClick={hideAllHints}
-            className="px-4 py-2 bg-gray-200 text-gray-800 text-sm font-medium rounded-md
-                       hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400"
+            className="px-4 py-2 text-sm font-semibold rounded-md
+                       border border-gray-400 text-gray-600 hover:text-red-600 hover:border-red-600
+                       transition duration-200"
           >
             Hide All Hints
           </button>
@@ -84,3 +86,4 @@ const HintBox = ({ hints = [] }) => {
 };
 
 export default HintBox;
+

@@ -15,18 +15,15 @@ let currentQuestionId = null;
 
 // Utility function to initialize the PGlite database
 const initializeDB = async (questionId, schema, sampleData) => {
-    // Only initialize if it's a new question or the instance is null
     if (db === null || currentQuestionId !== questionId) {
         db = new PGlite();
         currentQuestionId = questionId;
 
-        // Run schema statements
         const schemaStatements = schema.split(";").filter(s => s.trim());
         for (const stmt of schemaStatements) {
             await db.query(stmt);
         }
 
-        // Run sample data statements
         const sampleStatements = sampleData.split(";").filter(s => s.trim());
         for (const stmt of sampleStatements) {
             await db.query(stmt);
@@ -35,80 +32,60 @@ const initializeDB = async (questionId, schema, sampleData) => {
     return db;
 };
 
-
 const Playground = ({ questionId, onSubmission, onReset , initialQuery}) => {
   const [query, setQuery] = useState("-- Write your SQL query here");
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [submitLoading, setSubmitLoading] = useState(false);
   const [error, setError] = useState("");
-const navigate = useNavigate();
+  const navigate = useNavigate();
+
   const validateQuery = () => {
     if (!query.trim()) {
       setError("Query cannot be empty. Please write a query to proceed.");
       return false;
     }
-    // We remove the mandatory semicolon validation here, as PGlite handles queries without one,
-    // and we add it back later for consistency.
-    // if (!query.trim().endsWith(";")) {
-    //   setError("Syntax Error: Your SQL query must end with a semicolon (;).");
-    //   return false;
-    // }
     return true;
   };
 
-  // ✅ New Fetcher: Only fetches setup data (schema, expected query) from the backend
   const fetchQuestionSetup = async () => {
-    // Backend still uses userQuery to run security checks against forbidden keywords
     return axios.post(
       "https://datalemur-1.onrender.com/api/run",
       { questionId, userQuery: query }
     );
   };
 
-  // 🚀 New Core Function: Executes SQL client-side using PGlite
   const executeClientQuery = async (isSubmitting = false) => {
-    setLoading(true); // Manage loading state here
+    setLoading(true);
     setSubmitLoading(isSubmitting);
-    
     try {
-      // 1. Fetch Question Setup (Schema, Expected Query, Comparison Flags)
       const setupRes = await fetchQuestionSetup();
       const setupData = setupRes.data;
 
-      // 2. Initialize PGlite (This ensures schema/data is loaded once)
       const dbInstance = await initializeDB(
         questionId,
         setupData.schema,
         setupData.sampleData
       );
 
-      // --- Query Preparation (Adding LIMIT for safety on RUN) ---
       let safeUserQuery = query.trim();
-      if (safeUserQuery.endsWith(";")) {
-        safeUserQuery = safeUserQuery.slice(0, -1);
-      }
+      if (safeUserQuery.endsWith(";")) safeUserQuery = safeUserQuery.slice(0, -1);
       if (!isSubmitting && !/LIMIT\s+\d+/i.test(safeUserQuery)) {
         safeUserQuery += " LIMIT 200";
       }
       safeUserQuery += ";";
-      // --- End Preparation ---
 
-      // 3. Execute User Query
       let userRes = await dbInstance.query(safeUserQuery);
-
       const userResult = {
-        columns: userRes.fields?.map((f) => f.name) || [],
-        values: userRes.rows?.map((r) => Object.values(r)) || [],
+        columns: userRes.fields?.map(f => f.name) || [],
+        values: userRes.rows?.map(r => Object.values(r)) || [],
       };
 
-      // 4. If Submitting, Execute Expected Query and Compare
       if (isSubmitting) {
         const expRes = await dbInstance.query(setupData.expectedQuery);
-
         const expectedResult = {
-          columns: expRes.fields.map((f) => f.name),
-          values: expRes.rows.map((r) => Object.values(r)),
+          columns: expRes.fields.map(f => f.name),
+          values: expRes.rows.map(r => Object.values(r)),
         };
 
         const isCorrect = compareResults(
@@ -118,7 +95,6 @@ const navigate = useNavigate();
           setupData.columnOrderMatters
         );
 
-        // Return full submission data for onSubmission
         return {
           userResult,
           expectedResult,
@@ -126,20 +102,14 @@ const navigate = useNavigate();
           feedback: isCorrect ? "Correct!" : "Try again",
         };
       } else {
-        // Return only userResult for "Run"
         return { userResult };
       }
-
     } catch (err) {
-      // Handle errors from fetchQuestionSetup (security error) or dbInstance.query (SQL error)
       console.error("Client-side Execution Error:", err.message, err.response?.data?.error);
-      
       let errorMessage = "An unknown error occurred.";
       if (err.response?.data?.error) {
-          // Error from the backend (e.g., forbidden keyword check)
           errorMessage = err.response.data.error;
       } else if (err.message) {
-          // Error from PGlite (SQL syntax, table not found, etc.)
           errorMessage = `SQL Error: ${err.message}`;
           if (err.message.includes("does not exist")) {
               errorMessage = "Error: A table or column in your query does not exist.";
@@ -151,6 +121,7 @@ const navigate = useNavigate();
         setSubmitLoading(false);
     }
   };
+
   const checkAuth = () => {
     const token = localStorage.getItem("token");
     if (!token) {
@@ -161,7 +132,6 @@ const navigate = useNavigate();
     return true;
   };
   
-  // Update handleRun to use the client-side execution
   const handleRun = async () => {
     if (!checkAuth()) return;
     setResult(null);
@@ -169,68 +139,45 @@ const navigate = useNavigate();
     if (!validateQuery()) return;
 
     try {
-      const res = await executeClientQuery(false); // false for Run
-      
+      const res = await executeClientQuery(false);
       if (!res.userResult || res.userResult.values.length === 0) {
         setError("Query executed successfully, but returned no results.");
         setResult(null);
       } else {
         setResult({ userResult: res.userResult });
       }
-      
     } catch (err) {
       setError(err.message);
       setResult(null);
     }
   };
 
-  // Update handleSubmit to use the client-side execution
-  // Playground.jsx ke handleSubmit function ko aise update karein
+  const handleSubmit = async () => {
+    if (!checkAuth()) return;
+    setResult(null);
+    setError("");
+    if (!validateQuery()) return;
 
-const handleSubmit = async () => {
-  if (!checkAuth()) return;
-  setResult(null);
-  setError("");
-  if (!validateQuery()) return;
-
-  try {
-    // 1. Client-side execution aur comparison
-    const submissionData = await executeClientQuery(true); 
-    
-    // 2. Agar answer sahi hai (isCorrect: true), toh backend par save karein
-    if (submissionData.isCorrect) {
-      const token = localStorage.getItem("token");
-      
-      await axios.post(
-        "https://datalemur-1.onrender.com/api/submission/submit",
-        {
-          questionId: questionId,
-          userQuery: query,
-          isCorrect: true
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}` // Auth middleware ke liye token bhej rahe hain
-          }
-        }
-      );
-      console.log("Submission saved to database successfully! ✅");
+    try {
+      const submissionData = await executeClientQuery(true);
+      if (submissionData.isCorrect) {
+        const token = localStorage.getItem("token");
+        await axios.post(
+          "https://datalemur-1.onrender.com/api/submission/submit",
+          { questionId, userQuery: query, isCorrect: true },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+      }
+      onSubmission(submissionData);
+    } catch (err) {
+      setError(err.message);
+      console.error("Submission Error:", err);
     }
+  };
 
-    // 3. UI update karein (Tabs change honge aur results dikhenge)
-    onSubmission(submissionData);
-    
-  } catch (err) {
-    setError(err.message);
-    console.error("Submission Error:", err);
-  }
-};
-useEffect(() => {
-    if (initialQuery) {
-      setQuery(initialQuery);
-    } else {
-      setQuery("-- Write your SQL query here");
-    }
+  useEffect(() => {
+    if (initialQuery) setQuery(initialQuery);
+    else setQuery("-- Write your SQL query here");
   }, [initialQuery]);
 
   const handleReset = () => {
@@ -254,18 +201,21 @@ useEffect(() => {
           className="border border-gray-300 shadow-sm rounded"
         />
       </div>
+
       {!localStorage.getItem("token") && (
-      <div className="flex justify-end mb-2">
-        <p className="text-orange-600 text-sm font-medium bg-orange-50 px-3 py-1 rounded-md border border-orange-200">
-          ⚠️ You are in preview mode. Please login to execute or submit queries.
-        </p>
-      </div>
-    )}
+        <div className="flex justify-end mb-2">
+          <p className="text-orange-600 text-sm font-medium bg-orange-50 px-3 py-1 rounded-md border border-orange-200">
+            ⚠️ You are in preview mode. Please login to execute or submit queries.
+          </p>
+        </div>
+      )}
 
       <div className="flex justify-end gap-4 mb-4 flex-shrink-0">
         <button
           onClick={handleReset}
-          className="flex items-center gap-2 px-4 py-2 bg-gray-200 text-gray-800 rounded-full shadow hover:bg-gray-300 transition"
+          className="flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-full
+                     border border-gray-400 text-gray-600 hover:text-red-600 hover:border-red-600
+                     transition duration-200"
         >
           <FaSyncAlt /> Reset
         </button>
@@ -273,7 +223,9 @@ useEffect(() => {
         <button
           onClick={handleRun}
           disabled={loading || submitLoading}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-full shadow hover:bg-blue-700 transition disabled:bg-gray-400"
+          className={`flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-full
+                      border ${loading || submitLoading ? "border-gray-400 text-gray-400 cursor-not-allowed" : "border-red-600 text-red-600 hover:text-white hover:bg-red-600"}
+                      transition duration-200`}
         >
           <FaPlay /> Run
         </button>
@@ -281,11 +233,12 @@ useEffect(() => {
         <button
           onClick={handleSubmit}
           disabled={loading || submitLoading}
-          className="flex items-center gap-2 px-6 py-2 bg-green-600 text-white rounded-full shadow hover:bg-green-700 transition disabled:bg-gray-400"
+          className={`flex items-center gap-2 px-6 py-2 text-sm font-semibold rounded-full
+                      border ${loading || submitLoading ? "border-gray-400 text-gray-400 cursor-not-allowed" : "border-red-600 text-red-600 hover:text-white hover:bg-red-600"}
+                      transition duration-200`}
         >
           <FaCheck /> Submit
         </button>
-        
       </div>
 
       <div className="flex-grow overflow-auto p-2 bg-white rounded-lg border border-gray-200 shadow-inner">
