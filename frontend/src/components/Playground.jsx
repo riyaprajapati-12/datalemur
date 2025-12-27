@@ -105,16 +105,10 @@ const Playground = ({ questionId, onSubmission, onReset , initialQuery}) => {
         return { userResult };
       }
     } catch (err) {
-      console.error("Client-side Execution Error:", err.message, err.response?.data?.error);
-      let errorMessage = "An unknown error occurred.";
-      if (err.response?.data?.error) {
-          errorMessage = err.response.data.error;
-      } else if (err.message) {
-          errorMessage = `SQL Error: ${err.message}`;
-          if (err.message.includes("does not exist")) {
-              errorMessage = "Error: A table or column in your query does not exist.";
-          }
-      }
+      console.error("Client-side Execution Error:", err);
+      // The error from pglite is usually descriptive enough.
+      // We add a prefix to make it clear it's a SQL error.
+      const errorMessage = `SQL Execution Error: ${err.message}`;
       throw new Error(errorMessage);
     } finally {
         setLoading(false);
