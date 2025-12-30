@@ -158,14 +158,14 @@ const Layout = ({ handleQuestionSolved, solvedQuestions }) => {
       <footer className="flex items-center justify-between px-4 py-2 border-t">
         <button
           onClick={handlePreviousQuestion}
-          className="flex items-center gap-2 text-sm text-gray-600"
+          className="flex items-center gap-2 text-sm text-red-600"
         >
           <FaChevronLeft /> Previous
         </button>
 
         <button
           onClick={handleNextQuestion}
-          className="flex items-center gap-2 text-sm text-gray-600"
+          className="flex items-center gap-2 text-sm text-red-600"
         >
           Next <FaChevronRight />
         </button>
