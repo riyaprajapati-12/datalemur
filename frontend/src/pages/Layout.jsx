@@ -124,7 +124,7 @@ const Layout = ({ handleQuestionSolved, solvedQuestions }) => {
         </Link>
 
         <div className="flex items-center gap-4">
-          <FaDatabase className="text-gray-600" />
+          
           <Stopwatch />
         </div>
       </header>
