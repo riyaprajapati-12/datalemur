@@ -1,7 +1,10 @@
-
 import HintBox from "./HintBox";
+import { FaCheckCircle } from "react-icons/fa";
 
-const QuestionPanel = ({ question }) => {
+const QuestionPanel = ({ question, submissionData, solvedQuestions }) => {
+  const isSolved =
+    submissionData?.isCorrect || solvedQuestions?.includes(question.id);
+
   const tables = [];
 
   /* ------------------ Parse CREATE TABLE ------------------ */
@@ -66,8 +69,11 @@ const QuestionPanel = ({ question }) => {
   return (
     <div className="p-4 bg-white border border-gray-200 h-full overflow-y-auto">
       {/* Title */}
-      <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
+      <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6 flex items-center">
         {question.title}
+        {isSolved && (
+          <FaCheckCircle className="text-green-500 ml-4" />
+        )}
       </h1>
 
       <hr className="mb-6" />

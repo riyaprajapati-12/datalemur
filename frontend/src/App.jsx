@@ -1,31 +1,54 @@
-import { useEffect } from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
 import QuestionList from "./pages/QuestionList";
 import Layout from "./pages/Layout";
 import Signup from "./pages/Signup";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
+import axios from "axios";
 
-function App() {
+function AppContent() {
+  const [solvedQuestions, setSolvedQuestions] = useState([]);
+  const location = useLocation();
+
+  const handleQuestionSolved = (questionId) => {
+    setSolvedQuestions((prev) => [...new Set([...prev, questionId])]);
+  };
+
   useEffect(() => {
-    fetch("/api/test")
-      .then((res) => res.json())
-      .then((data) => console.log(data.message));
-  }, []);
+    const fetchSolvedQuestions = async () => {
+      const token = localStorage.getItem("token");
+      if (token) {
+        try {
+          const res = await axios.get("https://datalemur-1.onrender.com/api/submission/solved", {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          setSolvedQuestions(res.data);
+        } catch (err) {
+          console.error("Error fetching solved questions:", err);
+        }
+      }
+    };
+    fetchSolvedQuestions();
+  }, [location]);
 
   return (
+    <Routes>
+      <Route path="/questionList" element={<QuestionList solvedQuestions={solvedQuestions} />} />
+      <Route path="/" element={<Dashboard />} />
+      <Route path="/layout/:id" element={<Layout handleQuestionSolved={handleQuestionSolved} solvedQuestions={solvedQuestions} />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/signup" element={<Signup />} />
+    </Routes>
+  );
+}
+
+function App() {
+  return (
     <Router>
-      <Routes>
-        <Route path="/questionList" element={<QuestionList />} />
-        <Route path="/" element={<Dashboard />} />
-        <Route path="/layout/:id" element={<Layout />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<Signup />} />
-      </Routes>
+      <AppContent />
     </Router>
   );
 }
 
 export default App;
-
-//https://github.com/datawan-labs/pg.git

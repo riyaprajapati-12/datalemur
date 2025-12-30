@@ -9,6 +9,7 @@ export default function QuestionTabs({
   submissionData,
   activeTab,
   setActiveTab,
+  solvedQuestions,
 }) {
   return (
     <div className="h-full flex flex-col bg-white">
@@ -50,7 +51,7 @@ export default function QuestionTabs({
       {/* Tab Content */}
       <div className="flex-1 overflow-y-auto p-5">
         {activeTab === "Question" && (
-          <QuestionPanel question={question} />
+          <QuestionPanel question={question} solvedQuestions={solvedQuestions} />
         )}
 
         {activeTab === "Solution" && (

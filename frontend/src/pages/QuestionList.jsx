@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import axios from "axios";
-import { FaSearch } from "react-icons/fa";
+import { FaSearch, FaCheckCircle } from "react-icons/fa";
 
-const QuestionList = () => {
+const QuestionList = ({ solvedQuestions }) => {
   const [questions, setQuestions] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [difficultyFilter, setDifficultyFilter] = useState("All");
@@ -126,7 +126,10 @@ const QuestionList = () => {
               className="grid grid-cols-12 px-6 py-4 border-t
               hover:bg-red-50 transition"
             >
-              <div className="col-span-5 font-medium text-gray-800">
+              <div className="col-span-5 font-medium text-gray-800 flex items-center">
+                {solvedQuestions.includes(q.id) && (
+                  <FaCheckCircle className="text-green-500 mr-2" />
+                )}
                 {q.title}
               </div>
               <div

@@ -47,4 +47,14 @@ const getLatestSubmission = async (req, res) => {
   }
 };
 
-module.exports = { saveSubmission, getSubmissions, getLatestSubmission };
+const getSolvedQuestions = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const correctSubmissions = await Submission.find({ userId, isCorrect: true }).distinct('questionId');
+    res.json(correctSubmissions);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+module.exports = { saveSubmission, getSubmissions, getLatestSubmission, getSolvedQuestions };

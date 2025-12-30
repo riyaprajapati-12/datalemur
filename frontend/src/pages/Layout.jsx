@@ -6,7 +6,7 @@ import QuestionTabs from "../components/QuestionTabs";
 import Stopwatch from "../components/Stopwatch";
 import { FaDatabase, FaChevronLeft, FaChevronRight } from "react-icons/fa";
 
-const Layout = () => {
+const Layout = ({ handleQuestionSolved, solvedQuestions }) => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [question, setQuestion] = useState(null);
@@ -71,6 +71,9 @@ const Layout = () => {
   const handleSubmission = (data) => {
     setSubmissionData(data);
     setActiveTab("Submissions");
+    if (data.isCorrect) {
+      handleQuestionSolved(id);
+    }
   };
 
   const handleResetView = () => {
@@ -112,58 +115,5 @@ const Layout = () => {
       <header className="flex items-center justify-between px-4 py-3 border-b bg-white">
         <Link
           to="/questionList"
-          className="flex items-center gap-3 text-red-600 font-extrabold text-xl"
-        >
-          <div className="p-2 bg-red-600 rounded-lg">
-            <FaDatabase className="text-white" />
-          </div>
-          SQLQuist
-        </Link>
-
-        <Stopwatch />
-
-        <div className="flex gap-2">
-          <button
-            onClick={handlePreviousQuestion}
-            className="p-3 rounded-full hover:bg-red-50"
-          >
-            <FaChevronLeft className="text-red-600" />
-          </button>
-          <button
-            onClick={handleNextQuestion}
-            className="p-3 rounded-full hover:bg-red-50"
-          >
-            <FaChevronRight className="text-red-600" />
-          </button>
-        </div>
-      </header>
-
-      {/* Content */}
-      <div className="flex flex-col md:flex-row flex-grow overflow-hidden p-3 gap-3">
-        
-        {/* Question Section */}
-        <div className="w-full md:w-1/2 border border-gray-200 rounded-xl overflow-y-auto">
-          <QuestionTabs
-            question={question}
-            submissionData={submissionData}
-            activeTab={activeTab}
-            setActiveTab={setActiveTab}
-          />
-        </div>
-
-        {/* Playground */}
-        <div className="w-full md:w-1/2 border border-gray-200 rounded-xl overflow-y-auto">
-          <Playground
-            questionId={id}
-            totalQuestions={totalQuestions}
-            onSubmission={handleSubmission}
-            onReset={handleResetView}
-            initialQuery={initialQuery}
-          />
-        </div>
-      </div>
-    </div>
-  );
-};
-
+          className="flex items-center gap-3 text-red-60.
 export default Layout;
