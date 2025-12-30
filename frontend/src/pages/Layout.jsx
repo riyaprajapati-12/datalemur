@@ -94,26 +94,75 @@ const Layout = ({ handleQuestionSolved, solvedQuestions }) => {
     navigate(`/layout/${prevId}`);
   };
 
-  if (loading)
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white text-gray-500">
         Loading...
       </div>
     );
+  }
 
-  if (!question)
+  if (!question) {
     return (
       <div className="min-h-screen flex items-center justify-center text-red-600">
         Question not found
       </div>
     );
+  }
 
   return (
     <div className="flex flex-col h-screen bg-white">
-      
       {/* Header */}
       <header className="flex items-center justify-between px-4 py-3 border-b bg-white">
         <Link
           to="/questionList"
-          className="flex items-center gap-3 text-red-60.
+          className="flex items-center gap-3 text-red-600"
+        >
+          <FaChevronLeft />
+          Back
+        </Link>
+
+        <div className="flex items-center gap-4">
+          <FaDatabase className="text-gray-600" />
+          <Stopwatch />
+        </div>
+      </header>
+
+      {/* Content */}
+      <div className="flex flex-1 overflow-hidden">
+        <QuestionTabs
+          question={question}
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          submissionData={submissionData}
+          onReset={handleResetView}
+        />
+
+        <Playground
+          question={question}
+          onSubmit={handleSubmission}
+          initialQuery={initialQuery}
+        />
+      </div>
+
+      {/* Footer */}
+      <footer className="flex items-center justify-between px-4 py-2 border-t">
+        <button
+          onClick={handlePreviousQuestion}
+          className="flex items-center gap-2 text-sm text-gray-600"
+        >
+          <FaChevronLeft /> Previous
+        </button>
+
+        <button
+          onClick={handleNextQuestion}
+          className="flex items-center gap-2 text-sm text-gray-600"
+        >
+          Next <FaChevronRight />
+        </button>
+      </footer>
+    </div>
+  );
+};
+
 export default Layout;
