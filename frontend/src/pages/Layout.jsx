@@ -72,7 +72,8 @@ const Layout = ({ handleQuestionSolved, solvedQuestions }) => {
     setSubmissionData(data);
     setActiveTab("Submissions");
     if (data.isCorrect) {
-      handleQuestionSolved(id);
+      handleQuestionSolved(Number(id));
+
     }
   };
 
@@ -130,20 +131,27 @@ const Layout = ({ handleQuestionSolved, solvedQuestions }) => {
 
       {/* Content */}
       <div className="flex flex-1 overflow-hidden">
-        <QuestionTabs
-          question={question}
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          submissionData={submissionData}
-          onReset={handleResetView}
-        />
 
-        <Playground
-          question={question}
-          onSubmit={handleSubmission}
-          initialQuery={initialQuery}
-        />
-      </div>
+  <div className="w-1/2 border-r overflow-hidden">
+    <QuestionTabs
+      question={question}
+      activeTab={activeTab}
+      setActiveTab={setActiveTab}
+      submissionData={submissionData}
+      onReset={handleResetView}
+    />
+  </div>
+
+  <div className="w-1/2 overflow-hidden">
+    <Playground
+      question={question}
+      onSubmit={handleSubmission}
+      initialQuery={initialQuery}
+    />
+  </div>
+
+</div>
+
 
       {/* Footer */}
       <footer className="flex items-center justify-between px-4 py-2 border-t">

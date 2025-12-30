@@ -12,8 +12,10 @@ function AppContent() {
   const location = useLocation();
 
   const handleQuestionSolved = (questionId) => {
-    setSolvedQuestions((prev) => [...new Set([...prev, questionId])]);
-  };
+  const id = Number(questionId);
+  setSolvedQuestions(prev => [...new Set([...prev, id])]);
+};
+
 
   useEffect(() => {
     const fetchSolvedQuestions = async () => {
@@ -23,7 +25,12 @@ function AppContent() {
           const res = await axios.get("https://datalemur-1.onrender.com/api/submission/solved", {
             headers: { Authorization: `Bearer ${token}` },
           });
-          setSolvedQuestions(res.data);
+          setSolvedQuestions(
+  Array.isArray(res.data)
+    ? res.data.map(q => Number(q.id || q.questionId || q))   // safe conversion
+    : []
+);
+
         } catch (err) {
           console.error("Error fetching solved questions:", err);
         }

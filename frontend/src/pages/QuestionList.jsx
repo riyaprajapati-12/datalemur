@@ -127,7 +127,8 @@ const QuestionList = ({ solvedQuestions }) => {
               hover:bg-red-50 transition"
             >
               <div className="col-span-5 font-medium text-gray-800 flex items-center">
-                {solvedQuestions.includes(q.id) && (
+                {solvedQuestions.includes(Number(q.id))
+ && (
                   <FaCheckCircle className="text-green-500 mr-2" />
                 )}
                 {q.title}
