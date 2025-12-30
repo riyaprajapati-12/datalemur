@@ -144,10 +144,11 @@ const Layout = ({ handleQuestionSolved, solvedQuestions }) => {
 
   <div className="w-1/2 overflow-hidden">
     <Playground
-      question={question}
-      onSubmit={handleSubmission}
-      initialQuery={initialQuery}
-    />
+  questionId={question.id}
+  onSubmission={handleSubmission}
+  initialQuery={initialQuery}
+/>
+
   </div>
 
 </div>
